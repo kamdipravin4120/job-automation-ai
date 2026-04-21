@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aesthetic Samples — Orchestrator Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&family=Syne:wght@500;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #04060b; color: #cbd5e1; font-family: 'JetBrains Mono', monospace; }
+
+  .page {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 5rem;
+  }
+  .page-head {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    margin-bottom: 2.5rem;
+  }
+  .page-head h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+  }
+  .page-head p {
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #64748b;
+    letter-spacing: 0.04em;
+  }
+
+  .variant {
+    margin-bottom: 4rem;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .variant-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0.75rem 0 1.25rem;
+    border-bottom: 1px dashed rgba(148, 163, 184, 0.2);
+    margin-bottom: 1.5rem;
+  }
+  .variant-head .label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: #475569;
+  }
+  .variant-head .name {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: -0.01em;
+    color: #e2e8f0;
+    margin-top: 0.25rem;
+  }
+  .variant-head .desc {
+    max-width: 460px;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: #64748b;
+  }
+
+  /* Palette strip */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    margin-bottom: 1.5rem;
+  }
+  .swatch {
+    padding: 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 80px;
+  }
+  .swatch .role { font-size: 0.55rem; letter-spacing: 0.12em; opacity: 0.75; }
+  .swatch .hex { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.04em; }
+
+  /* =========================================================================
+     VARIANT A — ORBITAL COMMAND (Indigo + Electric Sky + Amber)
+     ========================================================================= */
+  .va {
+    --bg:        #070a1c;
+    --bg-deep:   #04061a;
+    --surface:   rgba(125, 211, 252, 0.08);
+    --border:    rgba(125, 211, 252, 0.22);
+    --border-hi: rgba(252, 163, 17, 0.45);
+    --text-hi:   #eef2ff;
+    --text-mid:  #94a3b8;
+    --text-low:  #475569;
+    --primary:   #38bdf8;   /* electric sky */
+    --primary-glow: rgba(56, 189, 248, 0.45);
+    --accent:    #fca311;   /* amber */
+    --accent-glow: rgba(252, 163, 17, 0.5);
+    --indigo:    #8b5cf6;   /* ultraviolet indigo */
+    --threat:    #ff4365;   /* coral alert */
+    --success:   #5eead4;   /* mint telemetry */
+    --display-font: 'Syne', sans-serif;
+    --body-font: 'Space Grotesk', sans-serif;
+    --mono-font: 'JetBrains Mono', monospace;
+  }
+  .va .swatch-bg       { background: var(--bg); color: var(--text-hi); }
+  .va .swatch-surface  {
+    background:
+      linear-gradient(var(--surface), var(--surface)),
+      var(--bg);
+    backdrop-filter: blur(14px);
+    color: var(--text-hi);
+    border: 1px solid var(--border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .va .swatch-primary  { background: var(--primary); color: #0b1020; }
+  .va .swatch-indigo   { background: var(--indigo); color: #fff; }
+  .va .swatch-accent   { background: var(--accent); color: #2a1a00; }
+  .va .swatch-threat   { background: var(--threat); color: #fff; }
+
+  /* =========================================================================
+     VARIANT B — SHADOW GRID (Obsidian + Cyan + Acid Green)
+     ========================================================================= */
+  .vb {
+    --bg:        #05070a;
+    --bg-deep:   #020305;
+    --surface:   rgba(8, 14, 20, 0.7);
+    --border:    rgba(0, 242, 255, 0.14);
+    --border-hi: rgba(163, 255, 18, 0.35);
+    --text-hi:   #e0faff;
+    --text-mid:  #708ea0;
+    --text-low:  #334155;
+    --primary:   #00f2ff;   /* neon cyan */
+    --primary-glow: rgba(0, 242, 255, 0.45);
+    --accent:    #a3ff12;   /* acid green */
+    --accent-glow: rgba(163, 255, 18, 0.5);
+    --indigo:    #5b7fff;
+    --threat:    #ff0099;   /* hot magenta */
+    --success:   #39ff14;
+    --display-font: 'Azeret Mono', monospace;
+    --body-font: 'JetBrains Mono', monospace;
+    --mono-font: 'JetBrains Mono', monospace;
+  }
+  .vb .swatch-bg       { background: var(--bg); color: var(--text-hi); }
+  .vb .swatch-surface  { background: #0a1018; color: var(--text-hi); }
+  .vb .swatch-primary  { background: var(--primary); color: #001218; }
+  .vb .swatch-indigo   { background: var(--indigo); color: #fff; }
+  .vb .swatch-accent   { background: var(--accent); color: #0a1800; }
+  .vb .swatch-threat   { background: var(--threat); color: #fff; }
+
+  /* Shared dashboard shell */
+  .dashboard {
+    position: relative;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(139, 92, 246, 0.12), transparent 55%),
+      radial-gradient(ellipse at 90% 90%, rgba(56, 189, 248, 0.08), transparent 60%),
+      linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    overflow: hidden;
+    min-height: 820px;
+  }
+  .vb .dashboard {
+    background-image:
+      radial-gradient(ellipse at 15% 0%, rgba(0, 242, 255, 0.07), transparent 55%),
+      radial-gradient(ellipse at 95% 95%, rgba(163, 255, 18, 0.05), transparent 60%),
+      linear-gradient(rgba(0, 242, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 242, 255, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+  }
+
+  /* Dashboard inner layout */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 0.8fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 1rem;
+    height: 760px;
+  }
+  .card {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0.5;
+  }
+  .card.priority::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 1; }
+  .card.threat::before   { background: linear-gradient(90deg, transparent, var(--threat), transparent); opacity: 1; }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .tag {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+    opacity: 0.85;
+    text-transform: uppercase;
+  }
+  .tag.accent { color: var(--accent); }
+  .tag.threat { color: var(--threat); }
+
+  /* Hero map */
+  .map-card {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    padding: 0;
+    overflow: hidden;
+  }
+  .map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .map-header h2 {
+    font-family: var(--display-font);
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    color: var(--text-hi);
+    font-weight: 700;
+  }
+  .map-header .meta {
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    color: var(--text-mid);
+  }
+  .map-svg {
+    width: 100%;
+    height: calc(100% - 52px);
+    display: block;
+  }
+
+  /* KPI / counter */
+  .kpi { display: flex; flex-direction: column; justify-content: space-between; }
+  .kpi .value {
+    font-family: var(--display-font);
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-hi);
+    line-height: 1;
+    margin: 0.5rem 0 0.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .unit {
+    display: inline-block;
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-left: 0.3rem;
+    vertical-align: top;
+    transform: translateY(8px);
+  }
+  .kpi .delta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    color: var(--success);
+  }
+  .kpi .label {
+    font-size: 0.7rem;
+    color: var(--text-mid);
+    letter-spacing: 0.05em;
+  }
+
+  /* Sparkline */
+  .spark-card { overflow: visible; }
+  .sparkline { width: 100%; height: 70px; margin-top: 0.5rem; }
+
+  /* Match ring */
+  .ring-card { display: flex; flex-direction: column; }
+  .ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+  }
+  .ring-svg { width: 90px; height: 90px; flex-shrink: 0; }
+  .ring-meta { flex: 1; }
+  .ring-meta .num {
+    font-family: var(--display-font);
+    font-size: 1.8rem;
+    color: var(--text-hi);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ring-meta .lbl {
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--text-mid);
+    text-transform: uppercase;
+  }
+  .ring-meta ul {
+    list-style: none;
+    margin-top: 0.6rem;
+    font-size: 0.65rem;
+    color: var(--text-mid);
+  }
+  .ring-meta li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ring-meta li span:last-child { color: var(--primary); }
+
+  /* Log feed */
+  .log-card {
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
+  }
+  .log-list {
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    line-height: 1.8;
+    max-height: 120px;
+    overflow: hidden;
+  }
+  .log-list .ts { color: var(--text-low); }
+  .log-list .agent { color: var(--primary); }
+  .log-list .agent.analyst { color: var(--accent); }
+  .log-list .agent.liaison { color: var(--indigo); }
+  .log-list .agent.threat  { color: var(--threat); }
+  .log-list .msg { color: var(--text-mid); }
+
+  /* Right-column: alerts */
+  .alert-card { grid-column: 3 / 4; grid-row: 1 / 4; display: flex; flex-direction: column; gap: 0.8rem; }
+  .alert {
+    padding: 0.8rem 0.9rem;
+    background: rgba(255, 67, 101, 0.06);
+    border-left: 2px solid var(--threat);
+    border-radius: 2px;
+    font-size: 0.68rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .alert.warn { background: rgba(252, 163, 17, 0.06); border-left-color: var(--accent); }
+  .vb .alert.warn { background: rgba(163, 255, 18, 0.05); }
+  .alert .ttl {
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--threat);
+    text-transform: uppercase;
+  }
+  .alert.warn .ttl { color: var(--accent); }
+  .alert .body {
+    font-family: var(--body-font);
+    font-size: 0.72rem;
+    color: var(--text-hi);
+    line-height: 1.45;
+  }
+  .alert .foot {
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    color: var(--text-low);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.55rem 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid var(--primary);
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--primary);
+  }
+  .vb .btn { background: rgba(0, 242, 255, 0.08); }
+  .btn:hover {
+    background: var(--primary);
+    color: var(--bg-deep);
+    box-shadow: 0 0 24px var(--primary-glow);
+    transform: translateY(-1px);
+  }
+  .btn.accent { border-color: var(--accent); color: var(--accent); background: rgba(252, 163, 17, 0.08); }
+  .vb .btn.accent { background: rgba(163, 255, 18, 0.08); }
+  .btn.accent:hover { background: var(--accent); color: var(--bg-deep); box-shadow: 0 0 24px var(--accent-glow); }
+
+  /* Pulse dot */
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+    animation: pulse-dot 1.6s infinite;
+  }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+  /* Typography sample strip */
+  .typo {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 1px;
+    margin-bottom: 1rem;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .typo > div {
+    background: var(--bg);
+    padding: 1rem 1.1rem;
+  }
+  .typo .display {
+    font-family: var(--display-font);
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-hi);
+  }
+  .typo .display-sub {
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+  }
+  .typo .data-mono {
+    font-family: var(--mono-font);
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: var(--text-hi);
+    font-variant-numeric: tabular-nums;
+  }
+  .typo .data-mono .u { color: var(--primary); }
+  .typo .data-lbl {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--text-low);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .typo .body-txt {
+    font-family: var(--body-font);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-mid);
+  }
+
+  /* Map arc + pulse animations */
+  @keyframes arc-draw {
+    from { stroke-dashoffset: 200; opacity: 0; }
+    20%  { opacity: 1; }
+    to   { stroke-dashoffset: 0; opacity: 0; }
+  }
+  .arc {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    fill: none;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    animation: arc-draw 3.6s ease-out infinite;
+  }
+  @keyframes marker-pulse {
+    0%   { r: 2; opacity: 1; }
+    100% { r: 14; opacity: 0; }
+  }
+  .marker-core {
+    fill: var(--primary);
+  }
+  .marker-core.accent { fill: var(--accent); }
+  .marker-core.threat { fill: var(--threat); }
+  .marker-ring {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 1;
+    animation: marker-pulse 2.4s ease-out infinite;
+    transform-origin: center;
+  }
+  .marker-ring.accent { stroke: var(--accent); }
+  .marker-ring.threat { stroke: var(--threat); }
+
+  @keyframes scanline-sweep {
+    0%   { transform: translateY(0); opacity: 0; }
+    10%  { opacity: 0.5; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  .scanline {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0;
+    animation: scanline-sweep 5s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Marching-ants flow */
+  @keyframes march {
+    to { stroke-dashoffset: -20; }
+  }
+  .flow-line {
+    stroke: var(--accent);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 3;
+    animation: march 1s linear infinite;
+    fill: none;
+  }
+
+  /* Staggered entry */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card, .typo, .palette { animation: fade-up 0.8s both; }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.12s; }
+  .card:nth-child(3) { animation-delay: 0.19s; }
+  .card:nth-child(4) { animation-delay: 0.26s; }
+  .card:nth-child(5) { animation-delay: 0.33s; }
+
+  /* Decide bar */
+  .decide-bar {
+    position: sticky;
+    bottom: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: rgba(4, 6, 11, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #94a3b8;
+  }
+  .decide-bar strong { color: #f8fafc; font-weight: 700; }
+  .decide-bar .pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 3px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+    letter-spacing: 0.1em;
+    margin-left: 0.5rem;
+  }
+
+  .foot-note {
+    margin-top: 1rem;
+    padding: 1rem;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: #64748b;
+    border-top: 1px dashed rgba(148, 163, 184, 0.15);
+  }
+  .foot-note code {
+    background: rgba(255,255,255,0.04);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    color: #cbd5e1;
+  }
+
+  /* Surface switcher (Variant A) */
+  .surface-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.015);
+    align-items: center;
+  }
+  .surface-switch .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+  }
+  .surface-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .surface-btn:hover { border-color: #cbd5e1; color: #e2e8f0; }
+  .surface-btn.active {
+    border-color: #fca311;
+    color: #fca311;
+    background: rgba(252, 163, 17, 0.08);
+    box-shadow: 0 0 14px rgba(252, 163, 17, 0.25);
+  }
+  .surface-btn .chip {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: #070A1C;
+    background-image: linear-gradient(var(--chip), var(--chip));
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="page-head">
+    <h1>Aesthetic Samples</h1>
+    <p>TWO_DIRECTIONS_// CYBERSEC_DASHBOARD_AESTHETIC // PICK_ONE_TO_APPLY</p>
+  </header>
+
+  <!-- ============================================================
+       VARIANT A — ORBITAL COMMAND
+       ============================================================ -->
+  <section class="variant va">
+    <div class="variant-head">
+      <div>
+        <span class="label">VARIANT_A</span>
+        <span class="name">Orbital Command</span>
+      </div>
+      <p class="desc">Refined NOC/SOC operations center. Deep indigo ground with ultraviolet atmosphere, electric-sky-blue as the connective primary, amber as the high-energy signal color. Display font: Syne. Glassmorphic tiles with Bezier threat arcs.</p>
+    </div>
+
+    <div class="palette">
+      <div class="swatch swatch-bg"><span class="role">GROUND</span><span class="hex">#070A1C</span></div>
+      <div class="swatch swatch-surface"><span class="role">SURFACE · GLASS</span><span class="hex" data-surface-label>rgba(125,211,252,.08)</span></div>
+      <div class="swatch swatch-primary"><span class="role">PRIMARY</span><span class="hex">#38BDF8</span></div>
+      <div class="swatch swatch-indigo"><span class="role">ATMOSPHERE</span><span class="hex">#8B5CF6</span></div>
+      <div class="swatch swatch-accent"><span class="role">SIGNAL</span><span class="hex">#FCA311</span></div>
+      <div class="swatch swatch-threat"><span class="role">THREAT</span><span class="hex">#FF4365</span></div>
+    </div>
+
+    <div class="surface-switch" id="va-switch">
+      <span class="lbl">SURFACE_GLASS →</span>
+      <button class="surface-btn active"
+              data-surface="rgba(125, 211, 252, 0.08)"
+              data-border="rgba(125, 211, 252, 0.22)"
+              style="--chip: rgba(125, 211, 252, 0.5);">
+        <span class="chip"></span> Ice Cyan
+      </button>
+      <button class="surface-btn"
+              data-surface="rgba(252, 211, 148, 0.07)"
+              data-border="rgba(252, 211, 148, 0.24)"
+              style="--chip: rgba(252, 211, 148, 0.55);">
+        <span class="chip"></span> Amber
+      </button>
+      <button class="surface-btn"
+              data-surface="rgba(196, 181, 253, 0.08)"
+              data-border="rgba(196, 181, 253, 0.24)"
+              style="--chip: rgba(196, 181, 253, 0.55);">
+        <span class="chip"></span> Ultraviolet
+      </button>
+      <button class="surface-btn"
+              data-surface="rgba(153, 246, 228, 0.07)"
+              data-border="rgba(153, 246, 228, 0.22)"
+              style="--chip: rgba(153, 246, 228, 0.55);">
+        <span class="chip"></span> Mint
+      </button>
+      <button class="surface-btn"
+              data-surface="rgba(255, 255, 255, 0.05)"
+              data-border="rgba(255, 255, 255, 0.15)"
+              style="--chip: rgba(255, 255, 255, 0.4);">
+        <span class="chip"></span> Pearl
+      </button>
+      <button class="surface-btn"
+              data-surface="rgba(148, 163, 184, 0.08)"
+              data-border="rgba(148, 163, 184, 0.2)"
+              style="--chip: rgba(148, 163, 184, 0.45);">
+        <span class="chip"></span> Slate
+      </button>
+    </div>
+
+    <div class="typo">
+      <div>
+        <div class="display">Orbital Command</div>
+        <div class="display-sub">DISPLAY // SYNE 700 // -2% TRACK</div>
+      </div>
+      <div>
+        <div class="data-lbl">TELEMETRY</div>
+        <div class="data-mono">1,247<span class="u"> _PINGS</span></div>
+        <div class="data-mono">94.2<span class="u"> _MATCH%</span></div>
+      </div>
+      <div>
+        <div class="data-lbl">BODY</div>
+        <div class="body-txt">Space Grotesk carries the prose layer; JetBrains Mono handles data, logs, and telemetry.</div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="scanline"></div>
+
+      <div class="dash-grid">
+        <!-- MAP HERO -->
+        <div class="card map-card">
+          <div class="map-header">
+            <h2>Global Mission Map</h2>
+            <span class="meta">LAT/LONG · LIVE · 12 TARGETS</span>
+          </div>
+          <svg class="map-svg" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" data-variant="va"></svg>
+        </div>
+
+        <!-- KPI -->
+        <div class="card kpi">
+          <div class="card-head">
+            <span class="tag">TARGETS_SCANNED</span>
+            <span class="dot"></span>
+          </div>
+          <div>
+            <div class="value" data-counter="1247">0</div>
+            <div class="delta">▲ +84 / 24h · <span style="color:var(--text-low)">vs. 1,163</span></div>
+            <div class="label">Across 6 sources · LinkedIn, Indeed, Glassdoor, Naukri, Wellfound, Otta</div>
+          </div>
+        </div>
+
+        <!-- RING -->
+        <div class="card ring-card priority">
+          <div class="card-head">
+            <span class="tag accent">DNA_MATCH_AVG</span>
+            <span class="dot"></span>
+          </div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="2"/>
+              <circle cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2"
+                      stroke-dasharray="100 100" stroke-dashoffset="6" stroke-linecap="round"
+                      transform="rotate(-90 18 18)" style="filter: drop-shadow(0 0 4px var(--accent-glow));"/>
+            </svg>
+            <div class="ring-meta">
+              <div class="num">94.2<span style="font-size:0.8rem;color:var(--text-mid);">%</span></div>
+              <div class="lbl">above 88th pct</div>
+              <ul>
+                <li><span>Eng Mgmt</span><span>97%</span></li>
+                <li><span>Platform</span><span>92%</span></li>
+                <li><span>AI/ML</span><span>89%</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SPARKLINE -->
+        <div class="card spark-card">
+          <div class="card-head">
+            <span class="tag">APPS_DISPATCHED · 14D</span>
+            <span style="font-family:var(--mono-font);font-size:0.6rem;color:var(--accent);">+32%</span>
+          </div>
+          <svg class="sparkline" viewBox="0 0 300 70" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="va-spark" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%"  stop-color="var(--accent)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6"
+                  fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                  style="filter: drop-shadow(0 0 3px var(--accent-glow));"/>
+            <path d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6 L300,70 L0,70 Z"
+                  fill="url(#va-spark)"/>
+            <!-- marching ants flow -->
+            <path class="flow-line" d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6"/>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono-font);font-size:0.58rem;color:var(--text-low);margin-top:0.3rem;">
+            <span>APR 08</span><span>APR 14</span><span>APR 21</span>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="card alert-card threat">
+          <div class="card-head">
+            <span class="tag threat">MISSION_ALERTS</span>
+            <span style="font-size:0.6rem;color:var(--text-low);">3_ACTIVE</span>
+          </div>
+          <div class="alert">
+            <span class="ttl">CRITICAL · MATCH_94%</span>
+            <span class="body">VP Engineering · Anthropic · Remote (SF anchor)</span>
+            <span class="foot">POSTED 14m ago · 412 applicants · DEADLINE 2d</span>
+          </div>
+          <div class="alert warn">
+            <span class="ttl">PRIORITY · MATCH_91%</span>
+            <span class="body">Director of Platform · OpenAI · SF</span>
+            <span class="foot">POSTED 2h ago · 203 applicants · DEADLINE 5d</span>
+          </div>
+          <div class="alert warn">
+            <span class="ttl">PRIORITY · MATCH_88%</span>
+            <span class="body">Head of AI Infra · Cohere · Toronto / Remote</span>
+            <span class="foot">POSTED 6h ago · 87 applicants · DEADLINE 7d</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:auto;">
+            <button class="btn">[ TAILOR_DNA ]</button>
+            <button class="btn accent">[ DISPATCH ]</button>
+          </div>
+        </div>
+
+        <!-- LOG -->
+        <div class="card log-card">
+          <div class="card-head">
+            <span class="tag">AGENT_TELEMETRY_STREAM</span>
+            <span style="font-size:0.6rem;color:var(--success);">● LIVE</span>
+          </div>
+          <div class="log-list">
+            <div><span class="ts">[17:42:08]</span> <span class="agent">SCOUT:</span> <span class="msg">MARKET_SCAN · 1,247 targets cataloged · 38 above threshold.</span></div>
+            <div><span class="ts">[17:42:11]</span> <span class="agent analyst">ANALYST:</span> <span class="msg">DNA_CALIB · profile_v12 → 94.2% match · handing off.</span></div>
+            <div><span class="ts">[17:42:14]</span> <span class="agent liaison">LIAISON:</span> <span class="msg">DISPATCH_QUEUE · 3 outbound · 2 awaiting ACK.</span></div>
+            <div><span class="ts">[17:42:17]</span> <span class="agent threat">THREAT:</span> <span class="msg">DEADLINE_WARN · Anthropic VP-Eng closing in 2d.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VARIANT B — SHADOW GRID
+       ============================================================ -->
+  <section class="variant vb">
+    <div class="variant-head">
+      <div>
+        <span class="label">VARIANT_B</span>
+        <span class="name">Shadow Grid</span>
+      </div>
+      <p class="desc">Pure obsidian ground, neon cyan as primary, acid green as the high-energy signal, hot magenta for threat. Heavier monospace typography (Azeret Mono display). More "terminal/hacker" than "corporate ops center". Same bento structure, different voice.</p>
+    </div>
+
+    <div class="palette">
+      <div class="swatch swatch-bg"><span class="role">GROUND</span><span class="hex">#05070A</span></div>
+      <div class="swatch swatch-surface"><span class="role">SURFACE</span><span class="hex">#0A1018</span></div>
+      <div class="swatch swatch-primary"><span class="role">PRIMARY</span><span class="hex">#00F2FF</span></div>
+      <div class="swatch swatch-indigo"><span class="role">ATMOSPHERE</span><span class="hex">#5B7FFF</span></div>
+      <div class="swatch swatch-accent"><span class="role">SIGNAL</span><span class="hex">#A3FF12</span></div>
+      <div class="swatch swatch-threat"><span class="role">THREAT</span><span class="hex">#FF0099</span></div>
+    </div>
+
+    <div class="typo">
+      <div>
+        <div class="display">shadow_grid</div>
+        <div class="display-sub">DISPLAY // AZERET_MONO 700 // +0% TRACK</div>
+      </div>
+      <div>
+        <div class="data-lbl">TELEMETRY</div>
+        <div class="data-mono">1,247<span class="u"> _PINGS</span></div>
+        <div class="data-mono">94.2<span class="u"> _MATCH%</span></div>
+      </div>
+      <div>
+        <div class="data-lbl">BODY</div>
+        <div class="body-txt">All-monospace voice. Every surface reads as a terminal. Rare display moments draw attention through contrast.</div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="scanline"></div>
+
+      <div class="dash-grid">
+        <!-- MAP HERO -->
+        <div class="card map-card">
+          <div class="map-header">
+            <h2>global_mission_map</h2>
+            <span class="meta">LAT/LONG · LIVE · 12 NODES</span>
+          </div>
+          <svg class="map-svg" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" data-variant="vb"></svg>
+        </div>
+
+        <!-- KPI -->
+        <div class="card kpi">
+          <div class="card-head">
+            <span class="tag">targets_scanned</span>
+            <span class="dot"></span>
+          </div>
+          <div>
+            <div class="value" data-counter="1247">0</div>
+            <div class="delta">▲ +84 / 24h · <span style="color:var(--text-low)">vs. 1,163</span></div>
+            <div class="label">6 sources · LD · ID · GD · NK · WF · OT</div>
+          </div>
+        </div>
+
+        <!-- RING -->
+        <div class="card ring-card priority">
+          <div class="card-head">
+            <span class="tag accent">dna_match_avg</span>
+            <span class="dot"></span>
+          </div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(0,242,255,0.12)" stroke-width="2"/>
+              <circle cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2"
+                      stroke-dasharray="100 100" stroke-dashoffset="6" stroke-linecap="round"
+                      transform="rotate(-90 18 18)" style="filter: drop-shadow(0 0 4px var(--accent-glow));"/>
+            </svg>
+            <div class="ring-meta">
+              <div class="num">94.2<span style="font-size:0.8rem;color:var(--text-mid);">%</span></div>
+              <div class="lbl">&gt; p88</div>
+              <ul>
+                <li><span>eng_mgmt</span><span>97%</span></li>
+                <li><span>platform</span><span>92%</span></li>
+                <li><span>ai_ml</span><span>89%</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SPARKLINE -->
+        <div class="card spark-card">
+          <div class="card-head">
+            <span class="tag">apps_dispatched_14d</span>
+            <span style="font-family:var(--mono-font);font-size:0.6rem;color:var(--accent);">+32%</span>
+          </div>
+          <svg class="sparkline" viewBox="0 0 300 70" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="vb-spark" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%"  stop-color="var(--accent)" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6"
+                  fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                  style="filter: drop-shadow(0 0 3px var(--accent-glow));"/>
+            <path d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6 L300,70 L0,70 Z"
+                  fill="url(#vb-spark)"/>
+            <path class="flow-line" d="M0,55 L25,50 L50,42 L75,46 L100,30 L125,36 L150,22 L175,28 L200,14 L225,20 L250,10 L275,18 L300,6"/>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono-font);font-size:0.58rem;color:var(--text-low);margin-top:0.3rem;">
+            <span>APR_08</span><span>APR_14</span><span>APR_21</span>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="card alert-card threat">
+          <div class="card-head">
+            <span class="tag threat">mission_alerts</span>
+            <span style="font-size:0.6rem;color:var(--text-low);">3_ACTIVE</span>
+          </div>
+          <div class="alert">
+            <span class="ttl">// CRIT · 94%</span>
+            <span class="body">vp_engineering · anthropic · remote[sf]</span>
+            <span class="foot">14m · 412 apps · T-2d</span>
+          </div>
+          <div class="alert warn">
+            <span class="ttl">// PRI · 91%</span>
+            <span class="body">director_platform · openai · sf</span>
+            <span class="foot">2h · 203 apps · T-5d</span>
+          </div>
+          <div class="alert warn">
+            <span class="ttl">// PRI · 88%</span>
+            <span class="body">head_ai_infra · cohere · toronto</span>
+            <span class="foot">6h · 87 apps · T-7d</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:auto;">
+            <button class="btn">[ tailor_dna ]</button>
+            <button class="btn accent">[ dispatch ]</button>
+          </div>
+        </div>
+
+        <!-- LOG -->
+        <div class="card log-card">
+          <div class="card-head">
+            <span class="tag">agent_telemetry_stream</span>
+            <span style="font-size:0.6rem;color:var(--success);">● LIVE</span>
+          </div>
+          <div class="log-list">
+            <div><span class="ts">[17:42:08]</span> <span class="agent">scout:</span> <span class="msg">market_scan · 1247 targets cataloged · 38 &gt; threshold.</span></div>
+            <div><span class="ts">[17:42:11]</span> <span class="agent analyst">analyst:</span> <span class="msg">dna_calib · profile_v12 → 94.2% match · handoff.</span></div>
+            <div><span class="ts">[17:42:14]</span> <span class="agent liaison">liaison:</span> <span class="msg">dispatch_queue · 3 outbound · 2 awaiting_ack.</span></div>
+            <div><span class="ts">[17:42:17]</span> <span class="agent threat">threat:</span> <span class="msg">deadline_warn · anthropic.vp_eng closing T-2d.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="decide-bar">
+    <div>Pick a direction. Tell Claude: <strong>"apply variant A"</strong> or <strong>"apply variant B"</strong> — or <strong>"A but swap amber for mint"</strong> etc.</div>
+    <div>
+      <span class="pick">[ A · ORBITAL ]</span>
+      <span class="pick">[ B · SHADOW ]</span>
+    </div>
+  </div>
+
+  <div class="foot-note">
+    <strong>Samples include:</strong> dot-matrix world map with Bezier attack arcs & pulsing blips · stroke-dasharray marching-ants flow · staggered card entry · animated stat counters · glassmorphic bento tiles · circular progress ring with glow · scanning-bar sweep · log telemetry typewriter. <br />
+    Both variants share the same data, structure, and animation grammar — only palette, typography, and voice differ.
+  </div>
+</div>
+
+<script>
+(() => {
+  // -----------------------------------------------------------------------
+  // Dot-matrix world map — stylized continental pattern
+  // Each row in CONTINENT_ROWS is a string of dots (1 = filled, 0 = empty)
+  // 40 cols x 18 rows. Hand-tuned to vaguely suggest NA, SA, EU, AF, AS, AU.
+  // -----------------------------------------------------------------------
+  const CONTINENT_ROWS = [
+    "0000000000000000000000000000000000000000",
+    "0000011111000000000001111111000000000000",
+    "0001111111110000000111111111110000000000",
+    "0011111111111000011111111111111100000000",
+    "0111111111111110111111111111111110000000",
+    "0011111111111110111111111111111111000000",
+    "0001111111111000011111111111111111100000",
+    "0000111111100000011111111111111110000000",
+    "0000011110000000011111111111111000000000",
+    "0000011100000000001111111111110000000000",
+    "0000011100000000001111110111000000000000",
+    "0000011110000000000111100111000000000000",
+    "0000001111000000000011000001111000000000",
+    "0000000111000000000011000001111110000000",
+    "0000000011100000000011000011111100000000",
+    "0000000001100000000001000000000000000000",
+    "0000000000000000000000000000000000000000",
+    "0000000000000000000000000000000000000000",
+  ];
+
+  // Named mission nodes — city-like points (col, row) on the grid
+  const NODES = [
+    { col: 8,  row: 5,  label: "SF",       type: "primary" },  // San Francisco
+    { col: 13, row: 5,  label: "NYC",      type: "primary" },  // New York
+    { col: 21, row: 5,  label: "LDN",      type: "accent"  },  // London
+    { col: 22, row: 6,  label: "BER",      type: "primary" },  // Berlin
+    { col: 23, row: 8,  label: "LAG",      type: "threat"  },  // Lagos / Africa
+    { col: 27, row: 6,  label: "DXB",      type: "primary" },  // Dubai
+    { col: 29, row: 7,  label: "BLR",      type: "accent"  },  // Bangalore
+    { col: 33, row: 6,  label: "TKY",      type: "primary" },  // Tokyo
+    { col: 32, row: 7,  label: "SHA",      type: "primary" },  // Shanghai
+    { col: 35, row: 13, label: "SYD",      type: "accent"  },  // Sydney
+    { col: 14, row: 13, label: "SAO",      type: "primary" },  // São Paulo
+    { col: 12, row: 10, label: "BOG",      type: "threat"  },  // Bogotá
+  ];
+
+  // Arcs between nodes (source index → target index)
+  const ARCS = [
+    [0, 2],   // SF → LDN
+    [1, 7],   // NYC → TKY
+    [6, 2],   // BLR → LDN
+    [2, 10],  // LDN → SAO
+    [7, 9],   // TKY → SYD
+    [3, 6],   // BER → BLR
+    [5, 1],   // DXB → NYC
+    [11, 0],  // BOG → SF
+  ];
+
+  const CELL_W = 15;  // 600 / 40
+  const CELL_H = 20;  // 360 / 18
+
+  function buildMap(svg) {
+    const ns = "http://www.w3.org/2000/svg";
+    const frag = document.createDocumentFragment();
+
+    // Dot-matrix continents
+    CONTINENT_ROWS.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] === "1") {
+          const c = document.createElementNS(ns, "circle");
+          c.setAttribute("cx", x * CELL_W + CELL_W / 2);
+          c.setAttribute("cy", y * CELL_H + CELL_H / 2);
+          c.setAttribute("r", 1.2);
+          c.setAttribute("fill", "currentColor");
+          c.setAttribute("opacity", "0.35");
+          c.style.color = "var(--primary)";
+          frag.appendChild(c);
+        }
+      }
+    });
+
+    // Latitude/longitude reference grid — very subtle
+    for (let lat = 1; lat < 4; lat++) {
+      const l = document.createElementNS(ns, "line");
+      l.setAttribute("x1", 0);
+      l.setAttribute("x2", 600);
+      l.setAttribute("y1", (lat * 90));
+      l.setAttribute("y2", (lat * 90));
+      l.setAttribute("stroke", "var(--primary)");
+      l.setAttribute("stroke-width", "0.3");
+      l.setAttribute("opacity", "0.08");
+      l.setAttribute("stroke-dasharray", "2 4");
+      frag.appendChild(l);
+    }
+
+    // Arcs
+    ARCS.forEach(([sIdx, tIdx], i) => {
+      const s = NODES[sIdx];
+      const t = NODES[tIdx];
+      const sx = s.col * CELL_W + CELL_W / 2;
+      const sy = s.row * CELL_H + CELL_H / 2;
+      const tx = t.col * CELL_W + CELL_W / 2;
+      const ty = t.row * CELL_H + CELL_H / 2;
+
+      // Control point: midpoint lifted up proportionally to distance
+      const mx = (sx + tx) / 2;
+      const my = (sy + ty) / 2;
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const lift = Math.min(dist * 0.35, 120);
+      // Perpendicular lift direction (always "upward" in SVG y)
+      const cx = mx;
+      const cy = my - lift;
+
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", `M${sx},${sy} Q${cx},${cy} ${tx},${ty}`);
+      path.setAttribute("class", "arc");
+      path.setAttribute("stroke", i % 3 === 0 ? "var(--accent)" : (i % 3 === 1 ? "var(--primary)" : "var(--indigo)"));
+      path.style.animationDelay = `${i * 0.45}s`;
+      path.style.filter = "drop-shadow(0 0 3px currentColor)";
+      frag.appendChild(path);
+    });
+
+    // Markers: each node = static core + expanding ring
+    NODES.forEach((n, i) => {
+      const cx = n.col * CELL_W + CELL_W / 2;
+      const cy = n.row * CELL_H + CELL_H / 2;
+
+      // Pulsing ring
+      const ring = document.createElementNS(ns, "circle");
+      ring.setAttribute("cx", cx);
+      ring.setAttribute("cy", cy);
+      ring.setAttribute("r", 2);
+      ring.setAttribute("class", `marker-ring ${n.type !== "primary" ? n.type : ""}`);
+      ring.style.animationDelay = `${(i % 4) * 0.4}s`;
+      frag.appendChild(ring);
+
+      // Core
+      const core = document.createElementNS(ns, "circle");
+      core.setAttribute("cx", cx);
+      core.setAttribute("cy", cy);
+      core.setAttribute("r", 2.2);
+      core.setAttribute("class", `marker-core ${n.type !== "primary" ? n.type : ""}`);
+      core.style.filter = "drop-shadow(0 0 4px currentColor)";
+      frag.appendChild(core);
+
+      // Label
+      if (n.label) {
+        const text = document.createElementNS(ns, "text");
+        text.setAttribute("x", cx + 6);
+        text.setAttribute("y", cy + 3);
+        text.setAttribute("font-family", "JetBrains Mono, monospace");
+        text.setAttribute("font-size", "7");
+        text.setAttribute("fill", "var(--text-mid)");
+        text.setAttribute("letter-spacing", "0.5");
+        text.textContent = n.label;
+        frag.appendChild(text);
+      }
+    });
+
+    svg.appendChild(frag);
+  }
+
+  document.querySelectorAll("svg.map-svg").forEach(buildMap);
+
+  // -----------------------------------------------------------------------
+  // Counter animation
+  // -----------------------------------------------------------------------
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.counter, 10);
+    const duration = 1400;
+    const start = performance.now();
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(target * eased).toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        animateCounter(e.target);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  document.querySelectorAll("[data-counter]").forEach((el) => observer.observe(el));
+
+  // -----------------------------------------------------------------------
+  // Surface switcher for Variant A
+  // -----------------------------------------------------------------------
+  const vaSection = document.querySelector(".variant.va");
+  const switcher = document.getElementById("va-switch");
+  const surfaceLabel = vaSection.querySelector("[data-surface-label]");
+
+  if (switcher && vaSection) {
+    switcher.querySelectorAll(".surface-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const surface = btn.dataset.surface;
+        const border  = btn.dataset.border;
+
+        vaSection.style.setProperty("--surface", surface);
+        vaSection.style.setProperty("--border",  border);
+
+        if (surfaceLabel) {
+          surfaceLabel.textContent = surface.replace(/\s+/g, "").replace("rgba(", "rgba(");
+        }
+
+        switcher.querySelectorAll(".surface-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
