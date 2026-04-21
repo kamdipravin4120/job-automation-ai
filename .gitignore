@@ -9,3 +9,5 @@ artifacts/pitches/
 artifacts/uploads/
 logs/
 .DS_Store
+.vscode/
+scratch/
