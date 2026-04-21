@@ -126,6 +126,51 @@ scraper:
         - ".styles_JDC__dang-inner-html__h0K4t"
         - ".dang-inner-html"
         - ".job-desc"
+  indeed:
+    enabled: true
+    headless: false
+    max_jobs_per_query: 10
+    timeout_ms: 30000
+    storage_state_path: artifacts/browser/indeed_state.json
+    search_url_template: "https://www.indeed.com/jobs?q={keywords}&l={location}"
+    selectors:
+      job_cards:
+        - ".job_seen_beacon"
+      card_title:
+        - "h2.jobTitle"
+        - "span[title]"
+      card_company:
+        - "[data-testid='company-name']"
+      card_location:
+        - "[data-testid='text-location']"
+      detail_title:
+        - "h2.jobTitle"
+      detail_company:
+        - "[data-testid='company-name']"
+      detail_description:
+        - "#jobDescriptionText"
+  glassdoor:
+    enabled: true
+    headless: false
+    max_jobs_per_query: 10
+    timeout_ms: 30000
+    storage_state_path: artifacts/browser/glassdoor_state.json
+    search_url_template: "https://www.glassdoor.com/Job/jobs.htm?sc.keyword={keywords}&locT=C&locId={location}"
+    selectors:
+      job_cards:
+        - "[data-test='jobListing']"
+      card_title:
+        - "[data-test='job-title']"
+      card_company:
+        - "[data-test='job-listing-company']"
+      card_location:
+        - "[data-test='job-location']"
+      detail_title:
+        - "[data-test='job-title']"
+      detail_description:
+        - "[data-test='job-description']"
+      modal_close:
+        - "[data-test='modal-close-close-button']"
 
 matcher:
   model: text-embedding-3-small
