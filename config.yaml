@@ -1,0 +1,185 @@
+app:
+  profile_path: data/profile.json
+  job_dump_path: artifacts/jobs/jobs.json
+  top_matches_to_process: 5
+  output_dir: artifacts
+
+logging:
+  level: INFO
+  file_path: logs/job_automation.log
+
+search_queries:
+  - keywords: "VP of Engineering Visa Sponsorship"
+    location: "United States"
+  - keywords: "CTO Visa Sponsorship"
+    location: "Worldwide"
+  - keywords: "Head of Technology Visa Sponsorship"
+    location: "European Economic Area"
+  - keywords: "VP of Technology"
+    location: "Dubai"
+  - keywords: "VP Engineering Remote"
+    location: "Worldwide"
+  - keywords: "LLM Engineer"
+    location: "Remote"
+
+scraper:
+  linkedin:
+    enabled: true
+    headless: false
+    max_jobs_per_query: 15
+    timeout_ms: 30000
+    storage_state_path: artifacts/browser/linkedin_state.json
+    search_url_template: "https://www.linkedin.com/jobs/search/?keywords={keywords}&location={location}"
+    selectors:
+      login_check:
+        - "img.global-nav__me-photo"
+        - "button.global-nav__primary-link-me-menu-trigger"
+      job_cards:
+        - ".job-card-container"
+        - ".jobs-search-results__list-item"
+        - "li.scaffold-layout__list-item"
+      card_title:
+        - ".job-card-list__title"
+        - ".job-card-container__link"
+        - "a.job-card-container__link"
+      card_company:
+        - ".job-card-container__company-name"
+        - ".artdeco-entity-lockup__subtitle"
+        - ".job-card-container__primary-description"
+      card_location:
+        - ".job-card-container__metadata-item"
+        - ".job-card-container__metadata-wrapper li"
+        - ".artdeco-entity-lockup__caption"
+      card_link:
+        - "a.job-card-list__title"
+        - "a.job-card-container__link"
+        - "a"
+      detail_title:
+        - ".job-details-jobs-unified-top-card__job-title"
+        - "h1"
+        - ".t-24.job-details-jobs-unified-top-card__job-title"
+      detail_company:
+        - ".job-details-jobs-unified-top-card__company-name"
+        - ".job-details-jobs-unified-top-card__company-name a"
+        - ".job-details-jobs-unified-top-card__primary-description a"
+      detail_location:
+        - ".job-details-jobs-unified-top-card__bullet"
+        - ".tvm__text--low-emphasis"
+        - ".job-details-jobs-unified-top-card__primary-description-container span"
+      detail_company:
+        - ".job-details-jobs-unified-top-card__company-name"
+        - ".job-details-jobs-unified-top-card__company-name a"
+        - ".job-details-jobs-unified-top-card__primary-description a"
+      detail_location:
+        - ".job-details-jobs-unified-top-card__bullet"
+        - ".tvm__text--low-emphasis"
+        - ".job-details-jobs-unified-top-card__primary-description-container span"
+      detail_description:
+        - ".jobs-description-content__text"
+        - ".jobs-box__html-content"
+        - ".jobs-description__container"
+      easy_apply_button:
+        - "button.jobs-apply-button"
+        - "button[aria-label*='Easy Apply']"
+  naukri:
+    enabled: true
+    headless: false
+    max_jobs_per_query: 15
+    timeout_ms: 30000
+    storage_state_path: artifacts/browser/naukri_state.json
+    search_url_template: "https://www.naukri.com/{keywords}-jobs-in-{location}"
+    selectors:
+      login_check:
+        - "div.nI-gNb-drawer__icon"
+        - "div.nI-gNb-header__menu"
+        - "a[href*='nlogin/login']"
+      job_cards:
+        - "article.jobTuple"
+        - ".srp-jobtuple-wrapper"
+        - "div.cust-job-tuple"
+      card_title:
+        - "a.title"
+        - "a[title]"
+        - ".jobTupleHeader a"
+      card_company:
+        - "a.comp-name"
+        - ".comp-name"
+        - ".companyInfo a"
+      card_location:
+        - ".locWdth"
+        - ".location"
+        - ".row-5 .loc-wrap"
+      card_link:
+        - "a.title"
+        - ".jobTupleHeader a"
+        - "a"
+      detail_title:
+        - "h1.styles_jd-header-title__rZwM1"
+        - "h1"
+      detail_company:
+        - "div.styles_jd-header-comp-name__MvqAI a"
+        - ".jd-header-comp-name a"
+      detail_location:
+        - "div.styles_jhc__loc___Du2H"
+        - ".styles_jhc__loc__Du2H"
+      detail_description:
+        - ".styles_JDC__dang-inner-html__h0K4t"
+        - ".dang-inner-html"
+        - ".job-desc"
+
+matcher:
+  model: text-embedding-3-small
+  batch_size: 32
+  top_k: 10
+  min_score: 0.15
+  weights:
+    description: 0.55
+    title: 0.25
+    skills: 0.20
+
+resume:
+  provider: gemini  # Set to 'gemini' to use Google Gemini
+  claude_model: claude-sonnet-4-20250514
+  gemini_model: gemini-3.1-flash-lite-preview
+  temperature: 0.2
+  max_tokens: 4096
+  docx_output_dir: artifacts/resumes
+  cover_letter_output_dir: artifacts/covers
+  pitch_output_dir: artifacts/pitches
+  font_name: Arial
+  font_size: 11
+
+apply:
+  enabled: true
+  headless: false
+  manual_review_required: true
+  max_applications_per_run: 5
+  login_check_selector:
+    - "img.global-nav__me-photo"
+    - "button.global-nav__primary-link-me-menu-trigger"
+  timeout_ms: 30000
+  storage_state_path: artifacts/browser/linkedin_state.json
+  resume_file_input_selector: "input[type='file']"
+  easy_apply_button_selector: "button.jobs-apply-button, a.jobs-apply-button, button[aria-label*='Easy Apply'], a[aria-label*='Easy Apply']"
+  next_button_selector: "button:has-text('Next'), button:has-text('Continue'), button:has-text('Next Step'), button[aria-label*='Next'], button[aria-label*='Continue']"
+  review_button_selector: "button:has-text('Review'), button[aria-label*='Review']"
+  submit_button_selector: "button:has-text('Submit'), button[aria-label*='Submit'], button[aria-label*='Submit application']"
+  dismiss_button_selector: "button[aria-label='Dismiss'], button:has-text('Done')"
+  progress_step_selector: ".artdeco-completeness-meter-linear__progress-element"
+  upload_wait_ms: 1500
+  human_delay_min_ms: 700
+  human_delay_max_ms: 1800
+
+tracking:
+  mode: sqlite
+  sqlite_path: artifacts/job_tracker.db
+  csv_path: artifacts/job_tracker.csv
+
+notion:
+  enabled: true
+  api_key_env_var: NOTION_API_KEY
+  api_base_url: https://api.notion.com/v1
+  notion_version: "2022-06-28"
+  request_timeout_sec: 30
+  application_tracking_data_source_id: 349025d2-82b2-8110-bcee-f12867852b49
+  max_records_per_sync: 200

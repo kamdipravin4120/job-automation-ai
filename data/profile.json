@@ -1,0 +1,86 @@
+{
+  "name": "Pravin Kamdi",
+  "email": "kamdi.pravin@gmail.com",
+  "phone": "+91 8356919181",
+  "location": "Mumbai, India",
+  "headline": "VP of Engineering | Platform Scalability | AI-Driven Systems | Cloud-Native Architecture",
+  "summary": "Senior Technology Leader with 17+ years of experience driving product engineering, platform scalability, and enterprise-grade digital systems across global organizations. Trusted executive partner to CEOs in defining technology roadmaps and delivering deep-tech digital platforms at scale.",
+  "preferred_titles": [
+    "VP of Engineering",
+    "CTO",
+    "Head of Technology",
+    "Director of Platform Scalability",
+    "Head of Engineering"
+  ],
+  "skills": [
+    "Technology Leadership",
+    "Product Engineering",
+    "Platform Scalability",
+    "Technical Architecture",
+    "Cloud-Native Systems",
+    "AI-Driven Systems",
+    "Data-Driven Decision Making",
+    "Enterprise Platforms",
+    "DevOps Enablement",
+    "Strategic Planning",
+    "Python",
+    "MySQL",
+    "HTML/CSS"
+  ],
+  "experience": [
+    {
+      "title": "Vice President \u2013 Animal Welfare",
+      "company": "Utkarsh Global Foundation \u2013 Mumbai",
+      "location": "Mumbai",
+      "dates": "09/2024 - 07/2025",
+      "bullets": [
+        "Led multi-location operations for a large NGO, focusing on technology-enabled process automation, data visibility, and operational scale.",
+        "Launched a new animal hospital in Nanded within 15 days, setting up operations, systems, staffing, and reporting.",
+        "Reduced overall operational costs by 12% through AI-driven reporting, spend analysis, and budget realignment.",
+        "Implemented Google Workspace and automated operational dashboards, reducing manual reporting effort by 40%."
+      ]
+    },
+    {
+      "title": "Vice President \u2013 Technology",
+      "company": "Smart Institute PVT LTD \u2013 Mumbai",
+      "location": "Mumbai",
+      "dates": "03/2021 - 05/2024",
+      "bullets": [
+        "Owned technology strategy, platform operations, and enterprise systems, partnering closely with senior leadership.",
+        "Defined and executed technology roadmaps covering platforms, security, data, and automation.",
+        "Drove AI-enabled automation initiatives across CRM and internal workflows, improving lead processing speed by 20%.",
+        "Architected and enforced security and compliance frameworks (SOC2, GDPR)."
+      ]
+    },
+    {
+      "title": "Associate Vice President \u2013 Operations",
+      "company": "Smart Institute PVT LTD \u2013 Mumbai",
+      "location": "Mumbai",
+      "dates": "07/2016 - 02/2021",
+      "bullets": [
+        "Scaled operations and internal platforms by building data-centric systems and automating workflows.",
+        "Developed and Implemented a centralized CRM platform, automating lead-to-registration workflows.",
+        "Designed and launched a Student Management & Placement Analytics module.",
+        "Improved course completion tracking by 100% using system-driven attendance and performance monitoring."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Arts: Politics",
+      "institution": "Yashwantrao Chavan Maharashtra Open University",
+      "year": "2014"
+    }
+  ],
+  "projects": [
+    {
+      "name": "ask.CAREERS ecosystem",
+      "description": "Integrated CRM, student lifecycle, analytics, and placement intelligence, streamlining the journey from enrollment to employment."
+    },
+    {
+      "name": "Placement Analytical Tool",
+      "description": "Developed in SUPERSET to help the placement team identify the right candidate for jobs."
+    }
+  ],
+  "certifications": []
+}

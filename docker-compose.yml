@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
+    command: ["python3", "main.py", "--config", "config.yaml", "pipeline", "--skip-apply"]
+
+  dashboard:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
+    command:
+      [
+        "python3",
+        "-m",
+        "streamlit",
+        "run",
+        "src/tracking/dashboard.py",
+        "--server.address=0.0.0.0",
+        "--server.port=8501",
+        "--",
+        "--config",
+        "config.yaml"
+      ]
+

@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+artifacts/browser/
+artifacts/resumes/
+artifacts/covers/
+artifacts/pitches/
+artifacts/uploads/
+logs/
+.DS_Store

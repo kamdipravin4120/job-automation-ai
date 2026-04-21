@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Automation AI | Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <nav class="sidebar">
+        <div class="logo">
+            <span class="logo-icon">🚀</span>
+            <span class="logo-text">AutoApply</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active"><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#applications">Applications</a></li>
+            <li><a href="#profile">Profile</a></li>
+            <li><a href="#settings">Settings</a></li>
+        </ul>
+        <div class="user-info">
+            <div class="avatar" id="user-avatar">?</div>
+            <div class="user-meta">
+                <p class="user-name" id="user-name">Guest User</p>
+                <span class="session-status authenticated">Session Active</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="content">
+        <header class="top-nav">
+            <h1>Dashboard Overview</h1>
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="triggerSync()">Sync Notion</button>
+                <button class="btn btn-primary" onclick="showUploadModal()">Upload Resume</button>
+            </div>
+        </header>
+
+        <div class="bento-grid">
+            <!-- Stats Row -->
+            <div class="card card-small stats-card" id="stat-applied">
+                <h3>Total Applied</h3>
+                <p class="stat-value">0</p>
+                <span class="trend up">+15% this week</span>
+            </div>
+            <div class="card card-small stats-card" id="stat-matches">
+                <h3>High Matches</h3>
+                <p class="stat-value">0</p>
+                <span class="trend">Ready for review</span>
+            </div>
+            <div class="card card-small stats-card" id="stat-interviews">
+                <h3>Interviews</h3>
+                <p class="stat-value">0</p>
+                <span class="trend">Upcoming</span>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="card card-large application-feed">
+                <div class="card-header">
+                    <h2>Recent Applications</h2>
+                    <a href="#applications" class="view-all">View All →</a>
+                </div>
+                <div class="job-card bento-card">
+                    <div class="job-header">
+                        <div>
+                            <h4 id="job-title-display">Job Title</h4>
+                            <p id="job-company-display" class="subtitle">Company Name</p>
+                        </div>
+                        <span id="job-match-badge" class="badge">Match: 95%</span>
+                    </div>
+                    
+                    <div class="job-meta">
+                        <span id="job-location-display">📍 Location</span>
+                        <span id="job-status-display" class="badge-status">Status: Found</span>
+                    </div>
+
+                    <div class="job-actions">
+                        <button id="tailor-btn" class="btn-secondary">✨ Tailor Resume</button>
+                        <a id="apply-btn" href="#" target="_blank" class="btn-primary">🛫 Manual Apply</a>
+                    </div>
+                    
+                    <div id="tailored-assets" class="asset-links" style="display: none;">
+                        <h5>Tailored Assets:</h5>
+                        <div class="asset-grid">
+                            <a id="download-docx" href="#" class="asset-link">📄 Resume (DOCX)</a>
+                            <a id="download-cover" href="#" class="asset-link">✉️ Cover Letter</a>
+                            <a id="view-pitch" href="#" class="asset-link">🎤 Recruiter Pitch</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="applications-table">
+                        <thead>
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Company</th>
+                                <th>Match Score</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="app-list">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Skills Analysis Card -->
+            <div class="card card-medium skills-analysis">
+                <div class="card-header">
+                    <h2>Skills Mapping</h2>
+                </div>
+                <div class="skill-cloud" id="skill-cloud">
+                    <!-- Dynamic Skills -->
+                </div>
+            </div>
+
+            <!-- Profile Overview -->
+            <div class="card card-medium profile-summary">
+                <div class="card-header">
+                    <h2>Candidate Profile</h2>
+                </div>
+                <div class="profile-details" id="profile-data">
+                    <p>No profile data. Upload a resume to get started.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Analyze New Resume</h2>
+            <p>Upload your resume (PDF/DOCX) to update your profile and find new matches.</p>
+            <form id="upload-form">
+                <div class="drop-zone" id="drop-zone">
+                    <span class="drop-zone__prompt">Drop file here or click to upload</span>
+                    <input type="file" name="file" class="drop-zone__input">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Start AI Analysis</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
