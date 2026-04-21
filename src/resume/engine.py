@@ -44,3 +44,11 @@ class ResumeService:
     def analyze_resume_text(self, text: str) -> CandidateProfile:
         """Utility for dashboard to parse uploaded resume files."""
         return self.ai_client.extract_profile_from_resume(text)
+
+    def analyze_linkedin_text(self, text: str) -> dict:
+        """New: Strategy analysis for LinkedIn profile optimization."""
+        return self.ai_client.analyze_linkedin_profile(text)
+
+    def generate_interview_briefing(self, profile: CandidateProfile, job: JobPosting) -> list[dict]:
+        """New: Generate tactical briefing for interview prep."""
+        return self.ai_client.generate_interview_briefing(profile, job)

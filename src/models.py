@@ -141,5 +141,6 @@ class ApplicationRecord(BaseModel):
     cover_letter_path: str | None = None
     recruiter_pitch_path: str | None = None
     notes: str = ""
+    briefing_json: str | None = None
     applied_at: datetime | None = None
     last_updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
