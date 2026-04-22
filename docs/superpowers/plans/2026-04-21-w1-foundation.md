@@ -4,7 +4,7 @@
 
 **Goal:** Migrate the existing Python pipeline from SQLite + inline execution to Postgres + Celery + typed errors + structured logging, with the CLI continuing to work unchanged as a thin wrapper over the new task layer.
 
-**Architecture:** Replace `load_config` with `pydantic-settings`, move domain models to `src/domain/`, introduce SQLAlchemy ORM + Alembic for schema management under `src/data/`, wrap each pipeline stage as an idempotent Celery task under `src/tasks/`, and add a typed error hierarchy + `structlog` observability. Zero changes to `src/services/*` (scraper/matcher/resume/apply) internals — they gain a Celery wrapper, that's all.
+**Architecture:** Replace `load_config` with `pydantic-settings`, introduce SQLAlchemy ORM + Alembic for schema management under `src/data/`, wrap each pipeline stage as an idempotent Celery task under `src/tasks/`, and add a typed error hierarchy + `structlog` observability. Zero changes to `src/scraper/`, `src/matcher/`, `src/resume/`, `src/apply/` internals — they gain a Celery wrapper, that's all. (CEO review 2026-04-22 dropped the earlier plan to move `src/models.py → src/domain/models.py`; Task 5 is now a no-op.)
 
 **Tech Stack:** Python 3.11+ · FastAPI (kept from current) · SQLAlchemy 2.0 (async) · Alembic · Celery 5 · Redis 7 · Postgres 16 · structlog · pydantic-settings · pytest · testcontainers · respx
 
@@ -18,7 +18,7 @@
 - `src/errors.py` — typed error hierarchy
 - `src/observability/__init__.py`, `src/observability/logging.py` — structlog config
 - `src/settings.py` — pydantic-settings replacing `load_config`
-- `src/domain/__init__.py` — namespace package
+- ~~`src/domain/__init__.py`~~ — DROPPED per CEO review; models stay at `src/models.py`
 - `src/data/__init__.py`, `src/data/db.py` — async engine + session factory
 - `src/data/models/__init__.py`, `src/data/models/<aggregate>.py` — one file per aggregate
 - `src/data/repositories/__init__.py`, `src/data/repositories/<aggregate>.py` — one per aggregate
@@ -34,7 +34,7 @@
 - `docs/w1-operating-notes.md` — `.env` vars, local dev loop, migration how-to
 
 **Moved:**
-- `src/models.py` → `src/domain/models.py` (with re-export shim at old path for one release)
+- ~~`src/models.py` → `src/domain/models.py`~~ — DROPPED per CEO review; `src/models.py` stays at its current path.
 
 **Modified:**
 - `main.py` — `worker`, `migrate`, `migrate-sqlite` commands added; existing commands unchanged
@@ -604,58 +604,11 @@ git commit -m "feat(settings): pydantic-settings with fail-fast validation"
 
 ---
 
-### Task 5: Move domain models to `src/domain/`
+### Task 5: ~~Move domain models to `src/domain/`~~ — DROPPED
 
-**Files:**
-- Create: `src/domain/__init__.py`
-- Create: `src/domain/models.py`
-- Modify: `src/models.py` (becomes a re-export shim)
+**Status:** Dropped per CEO review (2026-04-22, SELECTIVE EXPANSION). The originally proposed rename of `src/models.py → src/domain/models.py` along with the rest of the `src/* → src/services/*` directory reorganization (spec §3.2) was cut as pure churn on a solo project. `src/models.py` stays at its current path. All existing imports continue to work unchanged.
 
-- [ ] **Step 1: Move the file.**
-
-Run:
-```bash
-git mv src/models.py src/domain/models.py
-touch src/domain/__init__.py
-```
-
-- [ ] **Step 2: Add backcompat re-export shim at old path.**
-
-Create `src/models.py`:
-
-```python
-"""Backcompat re-export shim. New code should import from `src.domain.models`."""
-from src.domain.models import *  # noqa: F401,F403
-from src.domain.models import __all__  # noqa: F401
-```
-
-If `src/domain/models.py` does not declare `__all__`, add one at the bottom that enumerates every public class. Run:
-```bash
-python -c "import src.domain.models as m; print(sorted([n for n in dir(m) if not n.startswith('_') and isinstance(getattr(m, n), type)]))"
-```
-
-Use that list to populate `__all__` at the bottom of `src/domain/models.py`:
-
-```python
-__all__ = [
-    # Paste the printed list here as string entries.
-]
-```
-
-- [ ] **Step 3: Run full test suite — nothing should break.**
-
-Run:
-```bash
-python -m pytest -q
-```
-Expected: all existing tests still pass.
-
-- [ ] **Step 4: Commit.**
-
-```bash
-git add src/domain/ src/models.py
-git commit -m "refactor(domain): move models to src/domain with backcompat shim"
-```
+**Impact on subsequent tasks:** Task 7 and later that referred to "domain models" now refer to `src.models`. No other tasks depended on Task 5's output. Skip directly to Task 6.
 
 ---
 

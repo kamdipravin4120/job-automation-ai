@@ -1,10 +1,32 @@
 # Production-Grade Web App — Design Spec
 
 **Project:** Job Automation AI — web backend + operator console
-**Status:** Design, pending approval
+**Status:** Approved (CEO review 2026-04-21 — SELECTIVE EXPANSION), W1 in flight
 **Author:** System architect (Claude Opus 4.7)
-**Date:** 2026-04-21
+**Date:** 2026-04-21 (CEO review amendments 2026-04-22)
 **Consumers of this spec:** implementation agent, reviewers, future-me
+
+## CEO Review Amendments — 2026-04-22
+
+Applied from [`~/.gstack/projects/kamdipravin4120-job-automation-ai/ceo-plans/2026-04-21-production-web-app.md`](../../../~/.gstack/projects/kamdipravin4120-job-automation-ai/ceo-plans/2026-04-21-production-web-app.md). Mode: **SELECTIVE EXPANSION**. 7 proposals, 6 accepted, 1 deferred.
+
+| # | Change | Section | Status |
+|---|---|---|---|
+| 1 | Cut `src/orchestrator/* → src/services/*` directory rename | §3.2 | **Cut** |
+| 2 | Keep W3 operator console as spec'd | §4.3 | **Unchanged** |
+| 3 | Gmail inbound Claude classifier + status auto-propose | §4.5 (+ deliverables 7) | **Added** |
+| 4 | Nightly 8am digest push notification | §4.6 (+ deliverable 9) | **Added** |
+| 5 | Hardened LinkedIn DM off-switch (DB flip + 3-CAPTCHA auto-disable) | §4.5 (deliverable 4, expanded) | **Added** |
+| 6 | Ghost auto-detect — 21d no-inbound → status=ghosted | §4.5 (+ deliverable 8) | **Added** |
+| 7 | Response-rate analytics per tailoring variant | — | **Deferred to TODOS.md** (revisit at 50+ outcomes) |
+| 8 | Migration rollback runbook | §4.6 (+ deliverable 10) | **Added** |
+| 9 | KEK rotation runbook | §4.6 (+ deliverable 11) | **Added** |
+| 10 | Quarterly restore drill | §4.6 (+ deliverable 12) | **Added** |
+
+**Active W1 follow-ups** (carried forward from code-quality reviews during Tasks 2–3):
+- **Task 2 gap** — `PipelineError.details` dict needs PII/secret filter before API envelope + DB persistence. Fix at Task 11 (`@pipeline_task`).
+- **Task 3 gap** — structlog config missing `format_exc_info`/`dict_tracebacks` + `StackInfoRenderer`. `log.exception()` drops tracebacks in JSON mode. 3-line fix.
+- **Task 11 pairing** — `clear_correlation()` must live in `finally` of `@pipeline_task` to prevent correlation_id leakage across Celery prefork tasks.
 
 ---
 
@@ -78,6 +100,12 @@ Turn the current Python job-automation pipeline into a production-grade, self-ho
 
 ### 3.2 Directory layout (target)
 
+> **CEO review update (2026-04-21):** the originally proposed rename of
+> `src/orchestrator/`, `src/matcher/`, `src/resume/`, `src/scraper/`, `src/apply/`
+> into a new `src/services/*` namespace was **cut** as pure churn on a solo project
+> (every import in the repo would change for zero functional gain). All existing
+> packages stay at their current paths.
+
 ```
 src/
   api/               ← NEW: FastAPI routers, request/response schemas, deps
@@ -85,27 +113,28 @@ src/
     schemas/         pydantic request/response models
     deps/            auth, db session, current_device
     ws.py            WebSocket endpoint + topic multiplexer
-  domain/            ← MOVED from top-level models.py: pure pydantic domain models
   data/              ← NEW: SQLAlchemy models + Alembic
     models/
     repositories/    one per aggregate (jobs, applications, runs, drafts)
     migrations/      alembic env + versions
   tasks/             ← NEW: Celery tasks, one file per pipeline stage
     scrape.py · match.py · tailor.py · apply.py · mail.py · dm.py
-  services/          ← REFACTOR: existing orchestrator/, matcher/, resume/, scraper/, apply/
-    scraper/         unchanged layout
-    matcher/         unchanged
-    resume/          unchanged
-    apply/           unchanged
-    gmail/           ← NEW
-    linkedin_dm/     ← NEW
   selfheal/          ← NEW: selector repair, output validation, drift detection
     selector_repair.py
     output_validator.py
     drift_detector.py
   integrations/      ← NEW: external-service adapters (Gmail, Notion, FCM)
-  utils/             unchanged
-main.py              CLI stays; gains 'serve', 'worker', 'migrate' commands
+  gmail/             ← NEW: Gmail OAuth + send + inbound polling + Claude classifier
+  linkedin_dm/       ← NEW: LinkedIn DM via Playwright, rate-limited, feature-flagged
+  models.py          UNCHANGED — pydantic domain models stay at top-level
+  scraper/           UNCHANGED — LinkedIn, Naukri, Indeed, Glassdoor adapters
+  matcher/           UNCHANGED — OpenAI embeddings + scoring
+  resume/            UNCHANGED — Claude + Gemini tailoring + LinkedIn analysis
+  apply/             UNCHANGED — LinkedInEasyApplyBot Playwright flow
+  orchestrator/      UNCHANGED — existing pipeline orchestration
+  tracking/          UNCHANGED — CSV + Notion sync (SQLite replaced by data/ in W1)
+  utils/             UNCHANGED
+main.py              CLI stays; gains 'serve', 'worker', 'migrate', 'migrate-sqlite' commands
 config.yaml          unchanged format; loaded via pydantic-settings
 ```
 
@@ -216,14 +245,19 @@ See §7 for detailed designs. Deliverables:
 1. **Gmail OAuth** — installed-app-style OAuth (desktop flow; for a VPS we use "limited input device" or pop Chrome on the operator side). Refresh tokens stored encrypted (§6) in `integrations.credentials_encrypted`.
 2. **Gmail send** — `POST /drafts/{id}/send` with `channel: "gmail"` dispatches via `google-api-python-client`. Threading: replies attach to the same thread ID if known; otherwise new thread with a standardized subject line prefix.
 3. **Inbound Gmail polling** — every 10 minutes, poll Gmail for replies matching tracked thread IDs; write to `threads` with direction `in`; emit `apps:status` WS event + FCM push if a thread has unread incoming.
-4. **LinkedIn DM via Playwright** — dedicated Celery task on the `browser` queue. Strict rate limits enforced server-side: max 5 per day, 45-minute gap. CAPTCHA detection pauses the task with `AuthenticationExpiredError`. Feature-flagged via `config.linkedin_dm.enabled`.
+4. **LinkedIn DM via Playwright** — dedicated Celery task on the `browser` queue. Strict rate limits enforced server-side: max 5 per day, 45-minute gap. CAPTCHA detection pauses the task with `AuthenticationExpiredError`. **Hardened off-switch (CEO review):** feature-flagged via `config.linkedin_dm.enabled=false` AND requires a second enable flag `integrations.linkedin_dm_unlocked=true` set only via direct DB update (not config edit). Auto-disables the unlock flag after 3 consecutive CAPTCHA detections in any 24-hour window; restoring it requires operator action.
 5. **Draft lifecycle** — `POST /applications/{id}/followup` creates a Claude-drafted entry in `drafts`. `PATCH /drafts/{id}` accepts user edits. `POST /drafts/{id}/send` dispatches. Status transitions logged in `audit_log`.
 6. **Tone rewrites** — `POST /drafts/{id}/rewrite?tone=warm|professional|assertive` returns a regenerated body; chosen variant promoted on user pick.
+7. **Gmail inbound Claude classifier (CEO review addition)** — when inbound polling writes a new incoming `threads` row matching a tracked application, enqueue a classify task that asks Claude: given the email body + application context, classify as one of `{acknowledgment, interview_invite, rejection, offer, info_request, other}` with confidence. If confidence ≥ 0.8 and the proposed status differs from current, push a notification to the phone: "Acme replied re: {role}. Looks like {status_proposal}. Confirm?" Phone tap-to-accept transitions the application status and appends to `status_history`. Never auto-transitions without user confirmation.
+8. **Ghost auto-detection (CEO review addition)** — nightly Celery task scans `applications` with `current_status='submitted'` and no inbound `threads` rows in the last 21 days (threshold configurable via `config.tracking.ghost_threshold_days`). Auto-transitions status → `ghosted` and appends `status_history` entry with `source: 'auto_ghost_detect'`. Phone UI hides ghosted apps from default `Pending` view but they remain queryable via `/applications?status=ghosted`.
 
 **Acceptance:**
 - End-to-end: create job → apply → draft follow-up → send Gmail → receive mocked reply → status change delivered to phone.
 - Sending the 6th LinkedIn DM in a day: 429 with `error.code = "rate_limit_exceeded"` and `retry_after_seconds`.
 - CAPTCHA simulated during LinkedIn DM: task pauses, phone receives approval request with screenshot over WS.
+- **LinkedIn DM safety:** setting only `config.linkedin_dm.enabled=true` without `integrations.linkedin_dm_unlocked=true` results in `send_dm` task returning `AuthenticationExpiredError` with message "linkedin_dm_unlocked required; set via direct DB to enable". Simulating 3 CAPTCHA detections in 24h flips `linkedin_dm_unlocked=false` and emits an FCM push.
+- **Gmail classifier:** inbound email with interview-invite content yields `classify_confidence ≥ 0.8` in ≥ 8/10 synthetic test cases and surfaces a `status_proposal` event on the WebSocket topic.
+- **Ghost detection:** an application with `submitted_at` 22 days ago and zero inbound threads is auto-transitioned to `ghosted` on the next scheduled nightly run.
 
 ### 4.6 Phase W6 — Deploy + observability
 
@@ -239,12 +273,18 @@ See §7 for detailed designs. Deliverables:
 6. **Health endpoint** — `/healthz` returns DB reachable, Redis reachable, last successful scrape-age, integration statuses. Caddy uses it for readiness. Mobile uses it for a Status screen.
 7. **Graceful shutdown** — SIGTERM drains running Celery tasks for up to 60 s before killing; FastAPI stops accepting new connections immediately.
 8. **CI** — GitHub Actions runs unit + contract tests on every push; builds and pushes Docker images on tagged releases.
+9. **Nightly digest push (CEO review addition)** — scheduled Celery task at 08:00 in `config.digest.timezone` (default `Asia/Kolkata`). Queries the last 24h: scrapes run, new jobs above `match_score >= config.digest.min_score`, DLQ entries created, follow-ups due today (applications with `current_status='acknowledged'` and last thread > 3 days ago). Assembles a ≤ 180-char FCM payload; opening the push deep-links to a filtered phone view. Idempotent — won't double-send if the worker is restarted mid-window. Opt-out via `config.digest.enabled=false`.
+10. **Migration rollback runbook (CEO review addition)** — `docs/w6-runbooks/migration-rollback.md` documents the exact 3-command rollback when an Alembic migration fails mid-deploy: `docker compose stop worker-*` → `alembic downgrade -1` → `docker compose up -d --force-recreate api worker-*` rolling back to the prior image tag. Tested once in staging before W6 ships.
+11. **KEK rotation runbook (CEO review addition)** — `docs/w6-runbooks/kek-rotation.md` documents the drain-rotate-restart procedure: set `JOB_AUTOMATION_KEK_PREVIOUS` to current value → set `JOB_AUTOMATION_KEK` to new value → drain workers (`docker compose exec worker-mail celery inspect active`) → run `python main.py rotate-secrets` → unset `JOB_AUTOMATION_KEK_PREVIOUS` → restart all services.
+12. **Quarterly restore drill (CEO review addition)** — `docs/w6-runbooks/restore-drill.md` documents how to restore from the most recent `pg_dump` into a fresh Postgres container and verify row-count + deterministic hash against production. Calendar reminder + checklist line item ensures this actually runs every 3 months. A backup you haven't restored isn't a backup.
 
 **Acceptance:**
 - `./scripts/vps-bootstrap.sh example.com admin@example.com` on a clean Ubuntu 24.04 VPS brings a paired, HTTPS-serving instance up in ≤ 5 min.
 - `curl https://example.com/healthz` returns `200` once all services are green.
 - `systemctl restart docker` mid-run: all runs either complete or land in DLQ with diagnostics; no silent data loss.
 - Backup restore from a dump produces an identical `applications` table (checked by row-count + deterministic hash).
+- **Digest:** on a system with ≥ 1 scrape run and ≥ 1 new job in the last 24h, the scheduled nightly digest worker produces an FCM payload referencing the actual top-match title + company.
+- **Rollback runbook:** the three commands in `migration-rollback.md` executed against a deliberately-broken staging migration restore the stack to a known-good state in ≤ 5 minutes.
 
 ---
 
