@@ -778,14 +778,36 @@
   .graticule {
     fill: none;
     stroke: var(--primary);
-    opacity: 0.07;
+    opacity: 0.09;
     stroke-width: 0.3;
     stroke-dasharray: 1 3;
   }
   .graticule.prime {
-    opacity: 0.18;
-    stroke-dasharray: 3 2;
+    opacity: 0.28;
+    stroke-dasharray: 4 3;
     stroke: var(--accent);
+    stroke-width: 0.4;
+  }
+  .tropic-line {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.12;
+    stroke-width: 0.35;
+    stroke-dasharray: 2 4;
+  }
+  .polar-circle {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.09;
+    stroke-width: 0.35;
+    stroke-dasharray: 1 5;
+  }
+  .lat-label, .lon-label {
+    font-family: var(--mono-font);
+    font-size: 6.5px;
+    fill: var(--text-low);
+    letter-spacing: 0.06em;
+    opacity: 0.6;
   }
   .hud-corner {
     fill: none;
@@ -799,6 +821,33 @@
     opacity: 0.25;
   }
   .tick.major { opacity: 0.55; stroke-width: 0.8; }
+
+  .continent {
+    fill: url(#land-dots);
+    opacity: 0.95;
+  }
+  .continent-outline {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 0.4;
+    opacity: 0.42;
+    filter: drop-shadow(0 0 1.2px rgba(56,189,248,0.6));
+  }
+  .node-label {
+    font-family: var(--mono-font);
+    font-size: 7.5px;
+    fill: var(--text-mid);
+    letter-spacing: 0.08em;
+  }
+
+  @keyframes radar-rotate { to { transform: rotate(360deg); } }
+  .radar-sweep {
+    transform-origin: 310px 180px; /* map viewBox center — 620/2, 360/2 */
+    animation: radar-rotate 9s linear infinite;
+    mix-blend-mode: screen;
+    opacity: 0.5;
+    pointer-events: none;
+  }
 
   .particle {
     fill: var(--accent);
@@ -1226,148 +1275,306 @@
   const ns = "http://www.w3.org/2000/svg";
 
   // =========================================================================
-  // Dot-matrix world map
+  // Equirectangular world map — 620×360 viewBox = 360°lon × 180°lat
   // =========================================================================
-  const CONTINENT_ROWS = [
-    "0000000000000000000000000000000000000000",
-    "0000011111000000000001111111000000000000",
-    "0001111111110000000111111111110000000000",
-    "0011111111111000011111111111111100000000",
-    "0111111111111110111111111111111110000000",
-    "0011111111111110111111111111111111000000",
-    "0001111111111000011111111111111111100000",
-    "0000111111100000011111111111111110000000",
-    "0000011110000000011111111111111000000000",
-    "0000011100000000001111111111110000000000",
-    "0000011100000000001111110111000000000000",
-    "0000011110000000000111100111000000000000",
-    "0000001111000000000011000001111000000000",
-    "0000000111000000000011000001111110000000",
-    "0000000011100000000011000011111100000000",
-    "0000000001100000000001000000000000000000",
-    "0000000000000000000000000000000000000000",
-    "0000000000000000000000000000000000000000",
+  const W = 620, H = 360;
+  const proj = (lat, lon) => [(lon + 180) * W / 360, (90 - lat) * H / 180];
+
+  // Hand-authored simplified coastlines as [lat, lon] arrays.
+  // Resolution favors recognizability over cartographic accuracy.
+  const CONTINENTS = [
+    // NORTH AMERICA
+    [[71,-156],[68,-165],[64,-166],[60,-162],[58,-152],[55,-135],[50,-128],
+     [46,-124],[40,-124],[35,-121],[34,-119],[30,-116],[23,-110],[21,-106],
+     [16,-95],[14,-91],[11,-87],[9,-84],[8,-78],[9,-82],[13,-83],[16,-88],
+     [18,-88],[21,-87],[21,-90],[20,-97],[26,-97],[29,-95],[30,-90],[30,-84],
+     [28,-82],[25,-80],[31,-81],[33,-79],[36,-76],[39,-74],[42,-71],[45,-66],
+     [47,-64],[47,-60],[49,-54],[51,-56],[54,-58],[58,-62],[60,-65],[62,-78],
+     [67,-83],[69,-95],[70,-125],[70,-141]],
+
+    // GREENLAND
+    [[83,-30],[80,-22],[75,-18],[68,-28],[60,-44],[65,-52],[72,-56],[76,-62],
+     [80,-58],[82,-42]],
+
+    // SOUTH AMERICA
+    [[12,-72],[11,-66],[10,-62],[8,-60],[5,-52],[1,-50],[-2,-44],[-5,-35],
+     [-8,-35],[-13,-39],[-18,-39],[-23,-43],[-25,-48],[-32,-52],[-35,-57],
+     [-39,-62],[-42,-64],[-48,-66],[-53,-68],[-55,-68],[-54,-73],[-45,-74],
+     [-40,-73],[-33,-71],[-27,-71],[-18,-70],[-13,-77],[-7,-80],[-3,-81],
+     [2,-79],[7,-78],[8,-77]],
+
+    // EURASIA (Portugal → Scandinavia → Arctic → Kamchatka →
+    //          Korea → China → SE Asia → India → Arabia → Red Sea → Med)
+    [[36,-9],[43,-9],[44,-1],[48,-4],[49,-1],[51,1],[51,4],[53,7],[54,9],
+     [55,13],[56,16],[59,18],[63,21],[65,24],[67,23],[70,30],[69,33],[68,39],
+     [67,42],[66,50],[67,55],[69,60],[70,69],[74,77],[76,95],[75,110],[73,125],
+     [73,141],[71,160],[70,172],[66,180],[62,172],[56,162],[60,168],[55,155],
+     [52,156],[50,142],[48,142],[46,142],[45,137],[42,131],[40,129],[38,128],
+     [35,129],[34,127],[36,126],[37,125],[39,124],[40,121],[38,121],[35,120],
+     [31,121],[28,121],[24,118],[22,114],[21,110],[18,109],[14,109],[11,108],
+     [10,105],[9,104],[4,104],[1,103],[2,101],[5,100],[7,98],[12,97],[14,94],
+     [17,94],[20,92],[22,89],[21,91],[22,91],[22,89],[21,87],[19,85],[16,82],
+     [13,80],[11,79],[8,78],[8,77],[10,76],[13,74],[16,74],[20,72],[23,68],
+     [25,66],[24,61],[25,58],[22,58],[17,55],[13,48],[13,44],[17,42],[22,38],
+     [28,34],[30,33],[32,34],[34,36],[36,36],[36,33],[37,30],[39,27],[37,23],
+     [35,25],[36,27],[40,26],[41,29],[43,28],[45,30],[46,37],[44,38],[42,41],
+     [40,40],[37,30],[36,27],[38,24],[40,22],[37,22],[37,26],[41,24],[45,14],
+     [44,13],[40,18],[38,15],[40,17],[41,16],[44,10],[44,8],[43,5],[41,3],
+     [38,0],[36,-4],[36,-6]],
+
+    // AFRICA
+    [[36,-5],[35,-2],[37,7],[34,9],[32,15],[31,24],[31,30],[30,32],[27,34],
+     [22,37],[15,40],[12,43],[10,50],[2,45],[-2,42],[-6,39],[-10,40],[-15,40],
+     [-20,35],[-26,33],[-31,30],[-34,26],[-34,20],[-33,18],[-29,16],[-22,14],
+     [-15,12],[-9,13],[-6,12],[-5,9],[2,9],[4,7],[6,3],[5,-2],[5,-8],[8,-13],
+     [12,-17],[18,-16],[21,-17],[26,-14],[29,-10],[32,-9]],
+
+    // AUSTRALIA
+    [[-14,125],[-16,129],[-12,130],[-12,137],[-17,141],[-14,144],[-20,149],
+     [-27,153],[-34,151],[-38,145],[-39,143],[-35,138],[-34,135],[-32,134],
+     [-32,133],[-35,120],[-35,115],[-32,115],[-26,113],[-22,114],[-20,118],
+     [-18,122]],
+
+    // ANTARCTICA (band across the bottom)
+    [[-75,-180],[-72,-160],[-78,-140],[-73,-120],[-70,-95],[-74,-60],
+     [-68,-65],[-65,-60],[-66,-56],[-72,-40],[-75,-25],[-70,0],[-68,20],
+     [-69,45],[-67,65],[-66,85],[-68,105],[-66,125],[-68,145],[-74,165],
+     [-78,170],[-85,180],[-85,-180]],
+
+    // GREAT BRITAIN + IRELAND (simplified as one mass)
+    [[58,-5],[58,-2],[54,-1],[52,1],[50,-1],[50,-5],[52,-5],[52,-9],[55,-7]],
+
+    // JAPAN (Honshu primary)
+    [[45,141],[42,141],[38,141],[35,140],[34,137],[33,131],[34,130],[36,133],
+     [39,139],[42,140]],
+
+    // MADAGASCAR
+    [[-12,49],[-15,50],[-19,49],[-22,48],[-25,46],[-24,44],[-20,44],[-15,46]],
+
+    // NEW ZEALAND (North+South joined for simplicity)
+    [[-34,173],[-37,176],[-40,176],[-41,174],[-41,173],[-44,171],[-46,167],
+     [-46,170],[-44,173]],
+
+    // SUMATRA
+    [[5,95],[3,98],[-3,102],[-5,105],[-2,101],[2,97]],
+
+    // BORNEO
+    [[7,117],[4,118],[-1,117],[-3,114],[-3,110],[0,109],[4,113]],
+
+    // NEW GUINEA
+    [[-1,131],[-4,134],[-9,140],[-10,144],[-8,147],[-6,149],[-3,142],[-1,137]],
   ];
 
   const NODES = [
-    { col: 8,  row: 5,  label: "SF",  type: "primary" },
-    { col: 13, row: 5,  label: "NYC", type: "primary" },
-    { col: 21, row: 5,  label: "LDN", type: "accent"  },
-    { col: 22, row: 6,  label: "BER", type: "primary" },
-    { col: 23, row: 8,  label: "LAG", type: "threat"  },
-    { col: 27, row: 6,  label: "DXB", type: "primary" },
-    { col: 29, row: 7,  label: "BLR", type: "accent"  },
-    { col: 33, row: 6,  label: "TKY", type: "primary" },
-    { col: 32, row: 7,  label: "SHA", type: "primary" },
-    { col: 35, row: 13, label: "SYD", type: "accent"  },
-    { col: 14, row: 13, label: "SAO", type: "primary" },
-    { col: 12, row: 10, label: "BOG", type: "threat"  },
+    { id: "SF",  lat:  37.77, lon: -122.42, type: "command" },
+    { id: "NYC", lat:  40.71, lon:  -74.00, type: "primary" },
+    { id: "LDN", lat:  51.51, lon:   -0.13, type: "accent"  },
+    { id: "BER", lat:  52.52, lon:   13.40, type: "primary" },
+    { id: "LAG", lat:   6.52, lon:    3.37, type: "threat"  },
+    { id: "DXB", lat:  25.28, lon:   55.34, type: "primary" },
+    { id: "BLR", lat:  12.97, lon:   77.59, type: "accent"  },
+    { id: "TKY", lat:  35.68, lon:  139.69, type: "primary" },
+    { id: "SHA", lat:  31.22, lon:  121.46, type: "primary" },
+    { id: "SYD", lat: -33.87, lon:  151.21, type: "accent"  },
+    { id: "SAO", lat: -23.55, lon:  -46.63, type: "primary" },
+    { id: "BOG", lat:   4.71, lon:  -74.07, type: "threat"  },
   ];
-  const ARCS = [[0, 2], [1, 7], [6, 2], [2, 10], [7, 9], [3, 6], [5, 1], [11, 0]];
+  const ARCS = [[0,2],[1,7],[6,2],[2,10],[7,9],[3,6],[5,1],[11,0],[8,9]];
 
   const svg = document.getElementById("map-svg");
-  const W = 620, H = 360;
-  const CELL_W = W / 40;
-  const CELL_H = H / 18;
   const frag = document.createDocumentFragment();
 
   const COLORS = ["var(--accent)", "var(--primary)", "var(--indigo)"];
   const COLOR_HEX = ["#fca311", "#38bdf8", "#8b5cf6"];
 
   // -------------------------------------------------------------------------
-  // Layer 0 · geo watermark
+  // Layer 0 · SVG <defs> — dot pattern, atmosphere gradient, radar gradient
+  // Built with DOM APIs (no innerHTML) to avoid XSS/injection surface.
   // -------------------------------------------------------------------------
-  const wm = document.createElementNS(ns, "text");
-  wm.setAttribute("x", W / 2);
-  wm.setAttribute("y", H / 2 + 12);
-  wm.setAttribute("text-anchor", "middle");
-  wm.setAttribute("class", "geo-watermark");
-  wm.textContent = "GEO · 04°21";
-  frag.appendChild(wm);
+  const defs = document.createElementNS(ns, "defs");
 
-  // -------------------------------------------------------------------------
-  // Layer 1 · hex-staggered dot continents
-  // -------------------------------------------------------------------------
-  CONTINENT_ROWS.forEach((row, y) => {
-    const offset = (y % 2) ? CELL_W / 2 : 0;
-    for (let x = 0; x < row.length; x++) {
-      if (row[x] === "1") {
-        const c = document.createElementNS(ns, "circle");
-        c.setAttribute("cx", x * CELL_W + CELL_W / 2 + offset);
-        c.setAttribute("cy", y * CELL_H + CELL_H / 2);
-        c.setAttribute("r", 1.15);
-        c.setAttribute("fill", "var(--primary)");
-        c.setAttribute("opacity", "0.32");
-        frag.appendChild(c);
-      }
-    }
+  const pattern = document.createElementNS(ns, "pattern");
+  pattern.setAttribute("id", "land-dots");
+  pattern.setAttribute("x", "0"); pattern.setAttribute("y", "0");
+  pattern.setAttribute("width", "4"); pattern.setAttribute("height", "4");
+  pattern.setAttribute("patternUnits", "userSpaceOnUse");
+  const patternDot = document.createElementNS(ns, "circle");
+  patternDot.setAttribute("cx", "2"); patternDot.setAttribute("cy", "2");
+  patternDot.setAttribute("r", "0.72");
+  patternDot.setAttribute("fill", "#38bdf8");
+  patternDot.setAttribute("opacity", "0.62");
+  pattern.appendChild(patternDot);
+  defs.appendChild(pattern);
+
+  const atmosGrad = document.createElementNS(ns, "radialGradient");
+  atmosGrad.setAttribute("id", "earth-atmos");
+  atmosGrad.setAttribute("cx", "50%"); atmosGrad.setAttribute("cy", "50%");
+  atmosGrad.setAttribute("r", "72%");
+  [
+    ["0%", "rgba(56,189,248,0.14)"],
+    ["55%", "rgba(56,189,248,0.04)"],
+    ["100%", "rgba(56,189,248,0)"],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(ns, "stop");
+    stop.setAttribute("offset", offset);
+    stop.setAttribute("stop-color", color);
+    atmosGrad.appendChild(stop);
   });
+  defs.appendChild(atmosGrad);
+
+  const radarGrad = document.createElementNS(ns, "linearGradient");
+  radarGrad.setAttribute("id", "radar-grad");
+  radarGrad.setAttribute("gradientUnits", "userSpaceOnUse");
+  radarGrad.setAttribute("x1", String(W / 2));
+  radarGrad.setAttribute("y1", String(H / 2));
+  radarGrad.setAttribute("x2", String(W / 2 + 200));
+  radarGrad.setAttribute("y2", String(H / 2));
+  [
+    ["0%", "rgba(252,163,17,0)"],
+    ["70%", "rgba(252,163,17,0.08)"],
+    ["100%", "rgba(252,163,17,0.55)"],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(ns, "stop");
+    stop.setAttribute("offset", offset);
+    stop.setAttribute("stop-color", color);
+    radarGrad.appendChild(stop);
+  });
+  defs.appendChild(radarGrad);
+
+  frag.appendChild(defs);
 
   // -------------------------------------------------------------------------
-  // Layer 2 · full graticule (lat/lng grid)
+  // Layer 1 · atmospheric background wash
   // -------------------------------------------------------------------------
-  for (let col = 4; col < 40; col += 4) {
-    const x = col * CELL_W;
+  const atmos = document.createElementNS(ns, "rect");
+  atmos.setAttribute("x", 0); atmos.setAttribute("y", 0);
+  atmos.setAttribute("width", W); atmos.setAttribute("height", H);
+  atmos.setAttribute("fill", "url(#earth-atmos)");
+  frag.appendChild(atmos);
+
+  // -------------------------------------------------------------------------
+  // Layer 2 · graticule — meridians, parallels, equator, prime, tropics, polar
+  // -------------------------------------------------------------------------
+  for (let lon = -150; lon <= 150; lon += 30) {
+    const [x] = proj(0, lon);
     const l = document.createElementNS(ns, "line");
     l.setAttribute("x1", x); l.setAttribute("x2", x);
     l.setAttribute("y1", 0); l.setAttribute("y2", H);
-    l.setAttribute("class", col === 20 ? "graticule prime" : "graticule");
+    l.setAttribute("class", lon === 0 ? "graticule prime" : "graticule");
     frag.appendChild(l);
   }
-  for (let r = 3; r < 18; r += 3) {
-    const y = r * CELL_H;
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const [, y] = proj(lat, 0);
     const l = document.createElementNS(ns, "line");
     l.setAttribute("x1", 0); l.setAttribute("x2", W);
     l.setAttribute("y1", y); l.setAttribute("y2", y);
-    l.setAttribute("class", r === 9 ? "graticule prime" : "graticule");
+    l.setAttribute("class", lat === 0 ? "graticule prime" : "graticule");
     frag.appendChild(l);
   }
+  [23.5, -23.5].forEach((lat) => {
+    const [, y] = proj(lat, 0);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", W);
+    l.setAttribute("y1", y); l.setAttribute("y2", y);
+    l.setAttribute("class", "tropic-line");
+    frag.appendChild(l);
+  });
+  [66.5, -66.5].forEach((lat) => {
+    const [, y] = proj(lat, 0);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", W);
+    l.setAttribute("y1", y); l.setAttribute("y2", y);
+    l.setAttribute("class", "polar-circle");
+    frag.appendChild(l);
+  });
+
+  // Graticule labels
+  for (let lon = -150; lon <= 150; lon += 30) {
+    const [x] = proj(0, lon);
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", x);
+    t.setAttribute("y", H - 5);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("class", "lon-label");
+    t.textContent = lon === 0 ? "0°" : lon > 0 ? `${lon}°E` : `${Math.abs(lon)}°W`;
+    frag.appendChild(t);
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const [, y] = proj(lat, 0);
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", 6);
+    t.setAttribute("y", y - 3);
+    t.setAttribute("class", "lat-label");
+    t.textContent = lat === 0 ? "EQ" : lat > 0 ? `${lat}°N` : `${Math.abs(lat)}°S`;
+    frag.appendChild(t);
+  }
 
   // -------------------------------------------------------------------------
-  // Layer 3 · edge tick marks (lat on sides, lng on top/bottom)
+  // Layer 3 · continents — stippled fill + glowing outline
   // -------------------------------------------------------------------------
-  for (let r = 0; r <= 18; r++) {
-    const y = r * CELL_H;
-    const isMajor = r % 3 === 0;
+  const continentsG = document.createElementNS(ns, "g");
+  continentsG.setAttribute("class", "continents");
+  CONTINENTS.forEach((coords) => {
+    const d = "M " + coords.map(([lat, lon]) => proj(lat, lon).map((n) => n.toFixed(1)).join(",")).join(" L ") + " Z";
+    const fill = document.createElementNS(ns, "path");
+    fill.setAttribute("d", d);
+    fill.setAttribute("class", "continent");
+    continentsG.appendChild(fill);
+    const outline = document.createElementNS(ns, "path");
+    outline.setAttribute("d", d);
+    outline.setAttribute("class", "continent-outline");
+    continentsG.appendChild(outline);
+  });
+  frag.appendChild(continentsG);
+
+  // -------------------------------------------------------------------------
+  // Layer 4 · geo watermark (beneath HUD, above map)
+  // -------------------------------------------------------------------------
+  const wm = document.createElementNS(ns, "text");
+  wm.setAttribute("x", W / 2);
+  wm.setAttribute("y", 28);
+  wm.setAttribute("text-anchor", "middle");
+  wm.setAttribute("class", "geo-watermark");
+  wm.textContent = "EARTH · EQUIRECTANGULAR · WGS84";
+  frag.appendChild(wm);
+
+  // -------------------------------------------------------------------------
+  // Layer 5 · edge ticks (every 5° minor, 30° major)
+  // -------------------------------------------------------------------------
+  for (let lat = -90; lat <= 90; lat += 5) {
+    const [, y] = proj(lat, 0);
+    const isMajor = lat % 30 === 0;
     const len = isMajor ? 8 : 3;
-    const cls = "tick" + (isMajor ? " major" : "");
-    [
-      { x1: 0, x2: len },
-      { x1: W, x2: W - len },
-    ].forEach(({ x1, x2 }) => {
+    [{ x1: 0, x2: len }, { x1: W, x2: W - len }].forEach(({ x1, x2 }) => {
       const t = document.createElementNS(ns, "line");
       t.setAttribute("x1", x1); t.setAttribute("x2", x2);
-      t.setAttribute("y1", y);  t.setAttribute("y2", y);
-      t.setAttribute("class", cls);
+      t.setAttribute("y1", y); t.setAttribute("y2", y);
+      t.setAttribute("class", "tick" + (isMajor ? " major" : ""));
       frag.appendChild(t);
     });
   }
-  for (let c = 0; c <= 40; c++) {
-    const x = c * CELL_W;
-    const isMajor = c % 4 === 0;
+  for (let lon = -180; lon <= 180; lon += 5) {
+    const [x] = proj(0, lon);
+    const isMajor = lon % 30 === 0;
     const len = isMajor ? 8 : 3;
-    const cls = "tick" + (isMajor ? " major" : "");
-    [
-      { y1: 0, y2: len },
-      { y1: H, y2: H - len },
-    ].forEach(({ y1, y2 }) => {
+    [{ y1: 0, y2: len }, { y1: H, y2: H - len }].forEach(({ y1, y2 }) => {
       const t = document.createElementNS(ns, "line");
+      t.setAttribute("x1", x); t.setAttribute("x2", x);
       t.setAttribute("y1", y1); t.setAttribute("y2", y2);
-      t.setAttribute("x1", x);  t.setAttribute("x2", x);
-      t.setAttribute("class", cls);
+      t.setAttribute("class", "tick" + (isMajor ? " major" : ""));
       frag.appendChild(t);
     });
   }
 
   // -------------------------------------------------------------------------
-  // Layer 4 · HUD corner brackets
+  // Layer 6 · HUD corner brackets
   // -------------------------------------------------------------------------
   const B = 18, P = 6;
   [
-    [P,     P,     1,  1],
-    [W - P, P,    -1,  1],
-    [P,     H - P, 1, -1],
-    [W - P, H - P,-1, -1],
+    [P, P, 1, 1],
+    [W - P, P, -1, 1],
+    [P, H - P, 1, -1],
+    [W - P, H - P, -1, -1],
   ].forEach(([x, y, dx, dy]) => {
     const p = document.createElementNS(ns, "path");
     p.setAttribute("d", `M${x},${y + dy * B} L${x},${y} L${x + dx * B},${y}`);
@@ -1376,20 +1583,33 @@
   });
 
   // -------------------------------------------------------------------------
-  // Layer 5 · arcs + flowing data particles (animateMotion)
+  // Layer 7 · rotating radar sweep wedge (centered on map)
+  // -------------------------------------------------------------------------
+  const sweepCx = W / 2, sweepCy = H / 2, sweepR = 200;
+  const a0 = 0, a1 = -40 * Math.PI / 180;
+  const p0x = sweepCx + sweepR * Math.cos(a0), p0y = sweepCy + sweepR * Math.sin(a0);
+  const p1x = sweepCx + sweepR * Math.cos(a1), p1y = sweepCy + sweepR * Math.sin(a1);
+  const sweepArc = document.createElementNS(ns, "path");
+  sweepArc.setAttribute(
+    "d",
+    `M ${sweepCx} ${sweepCy} L ${p0x.toFixed(1)} ${p0y.toFixed(1)} A ${sweepR} ${sweepR} 0 0 0 ${p1x.toFixed(1)} ${p1y.toFixed(1)} Z`
+  );
+  sweepArc.setAttribute("fill", "url(#radar-grad)");
+  sweepArc.setAttribute("class", "radar-sweep");
+  frag.appendChild(sweepArc);
+
+  // -------------------------------------------------------------------------
+  // Layer 8 · arcs + flowing data particles
   // -------------------------------------------------------------------------
   const XLINK = "http://www.w3.org/1999/xlink";
   ARCS.forEach(([sIdx, tIdx], i) => {
     const s = NODES[sIdx], t = NODES[tIdx];
-    const sx = s.col * CELL_W + CELL_W / 2;
-    const sy = s.row * CELL_H + CELL_H / 2;
-    const tx = t.col * CELL_W + CELL_W / 2;
-    const ty = t.row * CELL_H + CELL_H / 2;
-    const mx = (sx + tx) / 2;
-    const my = (sy + ty) / 2;
+    const [sx, sy] = proj(s.lat, s.lon);
+    const [tx, ty] = proj(t.lat, t.lon);
+    const mx = (sx + tx) / 2, my = (sy + ty) / 2;
     const dist = Math.hypot(tx - sx, ty - sy);
-    const lift = Math.min(dist * 0.42, 140);
-    const d = `M${sx},${sy} Q${mx},${my - lift} ${tx},${ty}`;
+    const lift = Math.min(dist * 0.38, 130);
+    const d = `M${sx.toFixed(1)},${sy.toFixed(1)} Q${mx.toFixed(1)},${(my - lift).toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)}`;
     const pathId = `arc-${i}`;
     const color = COLORS[i % 3];
     const hex = COLOR_HEX[i % 3];
@@ -1403,7 +1623,6 @@
     path.style.filter = "drop-shadow(0 0 3px currentColor)";
     frag.appendChild(path);
 
-    // Flowing data particle
     const particle = document.createElementNS(ns, "circle");
     particle.setAttribute("r", 2.2);
     particle.setAttribute("fill", hex);
@@ -1423,19 +1642,17 @@
   });
 
   // -------------------------------------------------------------------------
-  // Layer 6 · nodes (sonar on command node + reticle on priority nodes)
+  // Layer 9 · nodes — sonar, reticle, ring, core, label
   // -------------------------------------------------------------------------
-  const COMMAND_IDX = 0; // SF
+  const COMMAND_IDX = 0;
   NODES.forEach((n, i) => {
-    const cx = n.col * CELL_W + CELL_W / 2;
-    const cy = n.row * CELL_H + CELL_H / 2;
+    const [cx, cy] = proj(n.lat, n.lon);
+    const visualType = n.type === "command" ? "accent" : n.type;
 
-    // Radial sonar sweep from command node
     if (i === COMMAND_IDX) {
       ["", "d1", "d2"].forEach((d) => {
         const sonar = document.createElementNS(ns, "circle");
-        sonar.setAttribute("cx", cx);
-        sonar.setAttribute("cy", cy);
+        sonar.setAttribute("cx", cx); sonar.setAttribute("cy", cy);
         sonar.setAttribute("r", 5);
         sonar.setAttribute("class", `sonar ${d}`.trim());
         sonar.setAttribute("stroke", "var(--accent)");
@@ -1443,11 +1660,10 @@
       });
     }
 
-    // Rotating target reticle on accent (priority) nodes
     if (n.type === "accent") {
       const g = document.createElementNS(ns, "g");
       g.setAttribute("class", "reticle");
-      g.setAttribute("transform", `translate(${cx} ${cy})`);
+      g.setAttribute("transform", `translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
       const bracketD = "M-9,-6 L-9,-9 L-6,-9 M6,-9 L9,-9 L9,-6 M-9,6 L-9,9 L-6,9 M6,9 L9,9 L9,6";
       const br = document.createElementNS(ns, "path");
       br.setAttribute("d", bracketD);
@@ -1456,51 +1672,40 @@
       br.setAttribute("fill", "none");
       br.setAttribute("opacity", "0.75");
       g.appendChild(br);
-      // crosshair inside
       const h = document.createElementNS(ns, "line");
       h.setAttribute("x1", -4); h.setAttribute("x2", 4);
-      h.setAttribute("y1", 0);  h.setAttribute("y2", 0);
+      h.setAttribute("y1", 0); h.setAttribute("y2", 0);
       h.setAttribute("stroke", "var(--accent)");
-      h.setAttribute("stroke-width", "0.4");
-      h.setAttribute("opacity", "0.5");
+      h.setAttribute("stroke-width", "0.4"); h.setAttribute("opacity", "0.5");
       g.appendChild(h);
       const v = document.createElementNS(ns, "line");
       v.setAttribute("x1", 0); v.setAttribute("x2", 0);
       v.setAttribute("y1", -4); v.setAttribute("y2", 4);
       v.setAttribute("stroke", "var(--accent)");
-      v.setAttribute("stroke-width", "0.4");
-      v.setAttribute("opacity", "0.5");
+      v.setAttribute("stroke-width", "0.4"); v.setAttribute("opacity", "0.5");
       g.appendChild(v);
       frag.appendChild(g);
     }
 
-    // Pulsing ring
     const ring = document.createElementNS(ns, "circle");
-    ring.setAttribute("cx", cx);
-    ring.setAttribute("cy", cy);
+    ring.setAttribute("cx", cx); ring.setAttribute("cy", cy);
     ring.setAttribute("r", 2);
-    ring.setAttribute("class", "marker-ring" + (n.type !== "primary" ? " " + n.type : ""));
+    ring.setAttribute("class", "marker-ring" + (visualType !== "primary" ? " " + visualType : ""));
     ring.style.animationDelay = `${(i % 5) * 0.35}s`;
     frag.appendChild(ring);
 
-    // Node core
     const core = document.createElementNS(ns, "circle");
-    core.setAttribute("cx", cx);
-    core.setAttribute("cy", cy);
+    core.setAttribute("cx", cx); core.setAttribute("cy", cy);
     core.setAttribute("r", 2.4);
-    core.setAttribute("class", "marker-core" + (n.type !== "primary" ? " " + n.type : ""));
+    core.setAttribute("class", "marker-core" + (visualType !== "primary" ? " " + visualType : ""));
     core.style.filter = "drop-shadow(0 0 5px currentColor)";
     frag.appendChild(core);
 
-    // Label
     const text = document.createElementNS(ns, "text");
     text.setAttribute("x", cx + 7);
     text.setAttribute("y", cy + 3);
-    text.setAttribute("font-family", "JetBrains Mono, monospace");
-    text.setAttribute("font-size", "7.5");
-    text.setAttribute("fill", "var(--text-mid)");
-    text.setAttribute("letter-spacing", "0.5");
-    text.textContent = n.label;
+    text.setAttribute("class", "node-label");
+    text.textContent = n.id;
     frag.appendChild(text);
   });
 
