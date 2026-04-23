@@ -3,18 +3,7 @@ import pytest
 from src.errors import ExternalServiceError, UserActionRequiredError
 from src.tasks.base import SAFE_DETAIL_KEYS, filter_error_details, pipeline_task
 
-
-@pytest.fixture
-def celery_app_eager():
-    """Run tasks synchronously in-process for tests."""
-    from src.tasks import celery_app as mod
-
-    mod.celery_app.conf.task_always_eager = True
-    # propagates=False so autoretry_for can drive the retry loop in-process;
-    # .get() still raises non-retryable errors (UserActionRequiredError).
-    mod.celery_app.conf.task_eager_propagates = False
-    yield mod.celery_app
-    mod.celery_app.conf.task_always_eager = False
+# celery_app_eager fixture lives in tests/tasks/conftest.py
 
 
 @pytest.mark.asyncio(loop_scope="session")
