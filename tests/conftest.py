@@ -44,7 +44,7 @@ def monkeypatch_session():
     mp.undo()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def db_session() -> AsyncIterator[AsyncSession]:
     from src.data.db import get_engine, get_sessionmaker
     from src.data.models import Base
