@@ -1,11 +1,21 @@
 import os
-from collections.abc import AsyncIterator
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
+# Module-level env stubs so modules that call get_settings() at import time
+# (e.g. src/tasks/celery_app.py) can be collected by pytest. The testcontainers
+# fixtures overwrite DATABASE_URL/CELERY_* with real URLs before any test runs.
+os.environ.setdefault("OPENAI_API_KEY", "test")
+os.environ.setdefault("ANTHROPIC_API_KEY", "test")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://stub:stub@localhost:1/stub")
+os.environ.setdefault("CELERY_BROKER_URL", "redis://stub:1/0")
+os.environ.setdefault("CELERY_RESULT_BACKEND", "redis://stub:1/0")
+
+from collections.abc import AsyncIterator  # noqa: E402
+
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
+from testcontainers.postgres import PostgresContainer  # noqa: E402
+from testcontainers.redis import RedisContainer  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -32,6 +42,13 @@ def _apply_test_env(pg_container, redis_container, monkeypatch_session):
     os.environ["CELERY_RESULT_BACKEND"] = os.environ["CELERY_BROKER_URL"]
     os.environ.setdefault("OPENAI_API_KEY", "test")
     os.environ.setdefault("ANTHROPIC_API_KEY", "test")
+    # Stubs from module load time are replaced; invalidate caches so downstream
+    # code picks up the real testcontainers URLs on first use.
+    from src import settings as _settings_mod
+    from src.data import db as _db_mod
+
+    _settings_mod.get_settings.cache_clear()
+    _db_mod.reset_engine_cache()
     yield
 
 

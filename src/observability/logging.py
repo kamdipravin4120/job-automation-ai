@@ -21,8 +21,11 @@ def configure_logging(level: str = "INFO", format: LogFormat = "json") -> None:
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         structlog.processors.TimeStamper(fmt="iso", utc=True),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
     ]
     if format == "json":
+        shared_processors.append(structlog.processors.dict_tracebacks)
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer(colors=False)
