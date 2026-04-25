@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.device import Device
@@ -34,23 +33,22 @@ class DevicesRepository:
 
     async def touch(
         self,
-        session: AsyncSession,
         device_id: uuid.UUID,
         *,
         ip: str | None,
         user_agent: str | None,
     ) -> None:
-        device = await session.get(Device, device_id)
+        device = await self.session.get(Device, device_id)
         if device is None:
             return
         device.last_seen_at = datetime.now(UTC)
         device.last_ip = ip
         device.last_user_agent = user_agent
-        await session.flush()
+        await self.session.flush()
 
-    async def revoke(self, session: AsyncSession, device_id: uuid.UUID) -> None:
-        device = await session.get(Device, device_id)
+    async def revoke(self, device_id: uuid.UUID) -> None:
+        device = await self.session.get(Device, device_id)
         if device is None:
             return
         device.revoked_at = datetime.now(UTC)
-        await session.flush()
+        await self.session.flush()

@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from datetime import UTC, datetime
 
 
@@ -24,8 +25,8 @@ async def test_touch_updates_last_seen(db_session):
     from src.data.repositories.devices import DevicesRepository
 
     repo = DevicesRepository(db_session)
-    device = await repo.create(public_key="pk-touch-test", pairing_ip=None)
-    await repo.touch(db_session, device.id, ip="10.0.0.1", user_agent="TestAgent/1")
+    device = await repo.create(public_key=f"pk-touch-test-{uuid.uuid4()}", pairing_ip=None)
+    await repo.touch(device.id, ip="10.0.0.1", user_agent="TestAgent/1")
     await db_session.refresh(device)
     assert device.last_ip == "10.0.0.1"
     assert device.last_user_agent == "TestAgent/1"
@@ -37,8 +38,8 @@ async def test_revoke_sets_revoked_at(db_session):
     from src.data.repositories.devices import DevicesRepository
 
     repo = DevicesRepository(db_session)
-    device = await repo.create(public_key="pk-revoke-test", pairing_ip=None)
+    device = await repo.create(public_key=f"pk-revoke-test-{uuid.uuid4()}", pairing_ip=None)
     assert device.revoked_at is None
-    await repo.revoke(db_session, device.id)
+    await repo.revoke(device.id)
     await db_session.refresh(device)
     assert device.revoked_at is not None
