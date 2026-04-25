@@ -60,9 +60,10 @@ class Settings(BaseSettings):
     environment: Literal["development", "staging", "production"] = "development"
 
     @model_validator(mode='after')
-    def _require_jwt_keys_in_production(self) -> 'Settings':
+    def _require_jwt_keys_in_non_development(self) -> 'Settings':
         if self.environment != "development":
-            if self.jwt_private_key.get_secret_value() == "placeholder":
+            if not self.jwt_private_key.get_secret_value() or \
+               self.jwt_private_key.get_secret_value() == "placeholder":
                 raise ValueError("JWT_PRIVATE_KEY must be set in non-development environments")
             if not self.jwt_public_key:
                 raise ValueError("JWT_PUBLIC_KEY must be set in non-development environments")
@@ -73,13 +74,13 @@ class Settings(BaseSettings):
         try:
             return cls()
         except ValidationError as e:
-            missing = [
-                ".".join(str(p) for p in err["loc"])
+            errors = [
+                ".".join(str(p) for p in err["loc"]) + ": " + err.get("msg", err["type"])
                 for err in e.errors()
-                if err["type"] == "missing"
+                if err["type"] in ("missing", "value_error")
             ]
             raise SettingsError(
-                "Missing required settings: " + ", ".join(missing)
+                "Settings validation failed: " + "; ".join(errors)
             ) from e
 
 
