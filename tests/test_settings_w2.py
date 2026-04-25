@@ -1,7 +1,3 @@
-import os
-import pytest
-
-
 def test_jwt_settings_parse():
     from src.settings import get_settings
     get_settings.cache_clear()

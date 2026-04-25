@@ -4,7 +4,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, ValidationError
+from pydantic import Field, SecretStr, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # JWT / Auth
     jwt_private_key: SecretStr = SecretStr("placeholder")
     jwt_public_key: str = ""
-    jwt_algorithm: str = "EdDSA"
+    jwt_algorithm: Literal["EdDSA"] = "EdDSA"
     jwt_ttl_days: int = 7
     jwt_rotation_days: int = 6
     jwt_leeway_seconds: int = 60
@@ -57,7 +57,16 @@ class Settings(BaseSettings):
 
     # App
     app_version: str = "0.2.0"
-    environment: str = "development"
+    environment: Literal["development", "staging", "production"] = "development"
+
+    @model_validator(mode='after')
+    def _require_jwt_keys_in_production(self) -> 'Settings':
+        if self.environment != "development":
+            if self.jwt_private_key.get_secret_value() == "placeholder":
+                raise ValueError("JWT_PRIVATE_KEY must be set in non-development environments")
+            if not self.jwt_public_key:
+                raise ValueError("JWT_PUBLIC_KEY must be set in non-development environments")
+        return self
 
     @classmethod
     def load(cls) -> "Settings":
