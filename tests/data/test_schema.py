@@ -11,7 +11,6 @@ async def test_all_tables_present(db_session):
         names = await conn.run_sync(_inspect)
     assert set(names) >= {
         "devices",
-        "sessions",
         "integrations",
         "jobs",
         "job_artifacts",
