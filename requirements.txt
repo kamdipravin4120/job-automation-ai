@@ -93,3 +93,5 @@ testcontainers[postgres,redis]==4.9.0
 respx==0.22.0
 pytest==8.3.3
 pytest-asyncio==0.24.0
+PyJWT[crypto]==2.9.0
+qrcode==7.4.2
