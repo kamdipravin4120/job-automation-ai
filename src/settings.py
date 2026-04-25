@@ -40,6 +40,25 @@ class Settings(BaseSettings):
     config_path: str = "config.yaml"
     profile_path: str = "data/profile.json"
 
+    # JWT / Auth
+    jwt_private_key: SecretStr = SecretStr("placeholder")
+    jwt_public_key: str = ""
+    jwt_algorithm: str = "EdDSA"
+    jwt_ttl_days: int = 7
+    jwt_rotation_days: int = 6
+    jwt_leeway_seconds: int = 60
+
+    # Bootstrap
+    bootstrap_secret_ttl_seconds: int = 600
+
+    # Rate limits
+    rate_limit_pair_per_min: int = 5
+    rate_limit_auth_per_min: int = 60
+
+    # App
+    app_version: str = "0.2.0"
+    environment: str = "development"
+
     @classmethod
     def load(cls) -> "Settings":
         try:

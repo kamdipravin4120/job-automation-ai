@@ -9,6 +9,22 @@ os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://stub:stub@localhost:
 os.environ.setdefault("CELERY_BROKER_URL", "redis://stub:1/0")
 os.environ.setdefault("CELERY_RESULT_BACKEND", "redis://stub:1/0")
 
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.serialization import (
+    Encoding, NoEncryption, PrivateFormat, PublicFormat,
+)
+
+_test_private_key = Ed25519PrivateKey.generate()
+_TEST_PRIVATE_PEM = _test_private_key.private_bytes(
+    Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()
+).decode()
+_TEST_PUBLIC_PEM = _test_private_key.public_key().public_bytes(
+    Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
+).decode()
+
+os.environ.setdefault("JWT_PRIVATE_KEY", _TEST_PRIVATE_PEM)
+os.environ.setdefault("JWT_PUBLIC_KEY", _TEST_PUBLIC_PEM)
+
 from collections.abc import AsyncIterator  # noqa: E402
 
 import pytest  # noqa: E402
@@ -90,3 +106,13 @@ async def db_session() -> AsyncIterator[AsyncSession]:
         yield session
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(scope="session")
+def test_private_pem() -> str:
+    return _TEST_PRIVATE_PEM
+
+
+@pytest.fixture(scope="session")
+def test_public_pem() -> str:
+    return _TEST_PUBLIC_PEM
