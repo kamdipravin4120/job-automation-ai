@@ -30,17 +30,18 @@ def run_migrations_offline() -> None:
 
 
 async def run_migrations_online() -> None:
-    engine = create_async_engine(get_url(), future=True)
-    async with engine.connect() as connection:
-        await connection.run_sync(
-            lambda sync_conn: context.configure(
-                connection=sync_conn,
-                target_metadata=target_metadata,
-            )
-        )
-        async with connection.begin():
-            await connection.run_sync(lambda _: context.run_migrations())
-    await engine.dispose()
+    engine = create_async_engine(get_url())
+    try:
+        async with engine.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+    finally:
+        await engine.dispose()
+
+
+def do_run_migrations(sync_conn) -> None:
+    context.configure(connection=sync_conn, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 def run_async_migrations() -> None:
