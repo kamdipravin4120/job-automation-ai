@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.settings import get_settings
+from src.api.routers.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -35,5 +36,7 @@ def create_app() -> FastAPI:
     @app.get("/health", include_in_schema=False)
     async def health_check():
         return {"status": "ok"}
+
+    app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 
     return app
