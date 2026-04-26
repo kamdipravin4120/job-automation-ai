@@ -17,5 +17,9 @@ def get_redis() -> aioredis.Redis:
 async def _close_redis() -> None:
     global _client
     if _client is not None:
-        await _client.aclose()
-        _client = None
+        try:
+            await _client.aclose()
+        except Exception:
+            pass
+        finally:
+            _client = None
