@@ -68,6 +68,20 @@ def _cmd_migrate_sqlite(args: argparse.Namespace) -> int:
     return _run(source=args.source)
 
 
+def _register_bootstrap(subparsers: argparse._SubParsersAction) -> None:
+    p = subparsers.add_parser(
+        "bootstrap",
+        help="Generate a device-pairing QR code and store secret in Redis.",
+    )
+    p.set_defaults(func=_cmd_bootstrap)
+
+
+def _cmd_bootstrap(args: argparse.Namespace) -> int:
+    from src.cli.bootstrap import run as _run
+    _run()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Automated job application system")
     parser.add_argument(
@@ -109,6 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
     _register_worker(subparsers)
     _register_migrate(subparsers)
     _register_migrate_sqlite(subparsers)
+    _register_bootstrap(subparsers)
     return parser
 
 
