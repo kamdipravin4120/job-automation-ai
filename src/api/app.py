@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.settings import get_settings
 from src.api.routers.auth import router as auth_router
+from src.api.routers.devices import router as devices_router
 from src.api.core.deps import get_current_device
 
 
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+    app.include_router(devices_router, prefix="/api/v1/devices", tags=["devices"])
 
     # Temporary placeholder — replaced by jobs router in Task 14
     @app.get("/api/v1/jobs")
