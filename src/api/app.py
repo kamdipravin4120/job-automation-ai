@@ -49,6 +49,14 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(IdempotencyMiddleware)
 
+    import pathlib
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    _static = pathlib.Path("static")
+    if _static.is_dir():
+        app.mount("/static", StaticFiles(directory=str(_static)), name="static")
+
     @app.get("/health", include_in_schema=False)
     async def health_check():
         return {"status": "ok"}
@@ -58,17 +66,22 @@ def create_app() -> FastAPI:
         from src.api.core.redis_dep import get_redis
         redis = get_redis()
         info = await redis.info("server")
-        return {
-            "redis_version": info.get("redis_version"),
-            "status": "ok",
-        }
+        return {"redis_version": info.get("redis_version"), "status": "ok"}
 
-    app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
-    app.include_router(devices_router, prefix="/api/v1/devices", tags=["devices"])
-    app.include_router(jobs_router, prefix="/api/v1/jobs", tags=["jobs"])
-    app.include_router(runs_router, prefix="/api/v1/runs", tags=["runs"])
+    app.include_router(auth_router,         prefix="/api/v1/auth",         tags=["auth"])
+    app.include_router(devices_router,      prefix="/api/v1/devices",      tags=["devices"])
+    app.include_router(jobs_router,         prefix="/api/v1/jobs",         tags=["jobs"])
+    app.include_router(runs_router,         prefix="/api/v1/runs",         tags=["runs"])
     app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
-    app.include_router(pipeline_router, prefix="/api/v1/pipeline", tags=["pipeline"])
-    app.include_router(ws_router, prefix="/api/v1", tags=["ws"])
+    app.include_router(pipeline_router,     prefix="/api/v1/pipeline",     tags=["pipeline"])
+    app.include_router(ws_router,           prefix="/api/v1",              tags=["ws"])
+
+    # SPA catch-all — MUST be last so all /api/v1/* routes match first
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_catch_all(full_path: str):
+        index = _static / "index.html"
+        if index.exists():
+            return FileResponse(str(index))
+        return {"detail": "Operator console not yet deployed"}
 
     return app
