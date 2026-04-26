@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.settings import get_settings
 from src.api.routers.auth import router as auth_router
@@ -48,10 +51,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.add_middleware(IdempotencyMiddleware)
-
-    import pathlib
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import FileResponse
 
     _static = pathlib.Path("static")
     if _static.is_dir():
