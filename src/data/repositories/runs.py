@@ -36,3 +36,26 @@ class RunsRepository:
         run.finished_at = datetime.now(UTC)
         run.error_code = error_code
         run.error_details = error_details
+
+    async def list_paginated(
+        self,
+        *,
+        page: int = 1,
+        per_page: int = 50,
+        status: str | None = None,
+    ) -> tuple[list[Run], int]:
+        from sqlalchemy import func, select
+
+        stmt = select(Run)
+        count_stmt = select(func.count()).select_from(Run)
+        if status:
+            stmt = stmt.where(Run.status == status)
+            count_stmt = count_stmt.where(Run.status == status)
+        stmt = stmt.order_by(Run.started_at.desc().nullslast()).offset((page - 1) * per_page).limit(per_page)
+
+        total = (await self.session.execute(count_stmt)).scalar_one()
+        items = list((await self.session.execute(stmt)).scalars())
+        return items, total
+
+    async def get_by_id(self, run_id) -> Run | None:
+        return await self.session.get(Run, run_id)
