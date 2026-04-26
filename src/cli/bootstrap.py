@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import secrets
 import time
 
@@ -11,12 +10,13 @@ def run(*, redis_url: str | None = None, print_qr: bool = True) -> str:
 
     from src.settings import get_settings
 
+    settings = get_settings()
     if redis_url is None:
-        redis_url = get_settings().celery_broker_url
+        redis_url = settings.celery_broker_url
 
     secret_bytes = secrets.token_bytes(32)
     secret_hex = secret_bytes.hex()
-    ttl = get_settings().bootstrap_secret_ttl_seconds
+    ttl = settings.bootstrap_secret_ttl_seconds
 
     r = syncredis.from_url(redis_url)
     r.setex(

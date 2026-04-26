@@ -18,3 +18,5 @@ async def test_bootstrap_stores_secret_in_redis(redis_container):
     val = await r.get(f"bootstrap:{secret}")
     await r.aclose()
     assert val is not None
+    ttl_remaining = await r.ttl(f"bootstrap:{secret}")
+    assert ttl_remaining > 0
