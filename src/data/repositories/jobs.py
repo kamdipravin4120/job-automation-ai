@@ -60,3 +60,28 @@ class JobsRepository:
         stmt = select(Job).where(Job.status == status).limit(limit)
         res = await self.session.execute(stmt)
         return list(res.scalars())
+
+    async def list_paginated(
+        self,
+        *,
+        page: int = 1,
+        per_page: int = 50,
+        status: str | None = None,
+        source: str | None = None,
+    ) -> tuple[list[Job], int]:
+        from sqlalchemy import func, select
+
+        stmt = select(Job)
+        count_stmt = select(func.count()).select_from(Job)
+        if status:
+            stmt = stmt.where(Job.status == status)
+            count_stmt = count_stmt.where(Job.status == status)
+        if source:
+            stmt = stmt.where(Job.source == source)
+            count_stmt = count_stmt.where(Job.source == source)
+        stmt = stmt.offset((page - 1) * per_page).limit(per_page)
+
+        total_res = await self.session.execute(count_stmt)
+        total = total_res.scalar_one()
+        res = await self.session.execute(stmt)
+        return list(res.scalars()), total

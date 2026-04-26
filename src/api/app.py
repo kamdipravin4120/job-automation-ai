@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.settings import get_settings
 from src.api.routers.auth import router as auth_router
 from src.api.routers.devices import router as devices_router
-from src.api.core.deps import get_current_device
+from src.api.routers.jobs import router as jobs_router
 from src.api.middleware.idempotency import IdempotencyMiddleware
 
 
@@ -43,10 +43,6 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(devices_router, prefix="/api/v1/devices", tags=["devices"])
-
-    # Temporary placeholder — replaced by jobs router in Task 14
-    @app.get("/api/v1/jobs")
-    async def _jobs_placeholder(device=Depends(get_current_device)):
-        return {"items": [], "total": 0, "page": 1, "per_page": 50, "has_next": False}
+    app.include_router(jobs_router, prefix="/api/v1/jobs", tags=["jobs"])
 
     return app
