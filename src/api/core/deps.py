@@ -36,14 +36,13 @@ async def get_current_device(
 
     try:
         payload = decode_jwt(credentials.credentials)
+        jti = payload["jti"]
+        device_id = uuid.UUID(payload["sub"])
+        iat = payload["iat"]
     except pyjwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except pyjwt.exceptions.PyJWTError:
+    except (pyjwt.exceptions.PyJWTError, KeyError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")
-
-    jti = payload["jti"]
-    device_id = uuid.UUID(payload["sub"])
-    iat = payload["iat"]
 
     # JTI revocation check
     if await redis.exists(f"revoked:jti:{jti}"):
@@ -67,7 +66,7 @@ async def get_current_device(
         remaining = int(payload["exp"] - time.time())
         if remaining > 0:
             await redis.setex(f"revoked:jti:{jti}", remaining, "1")
-        request.state.next_token = new_token
+        request.state.next_token = new_token  # TODO: emit as X-Refresh-Token header via response middleware
 
     # Update last_seen
     await repo.touch(
@@ -75,5 +74,6 @@ async def get_current_device(
         ip=request.client.host if request.client else None,
         user_agent=request.headers.get("User-Agent"),
     )
+    await db.commit()
 
     return device

@@ -111,3 +111,64 @@ async def test_protected_route_rejects_expired_token(async_client, test_private_
 
     r = await async_client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_protected_route_rejects_revoked_jti(async_client, redis_client, test_private_pem, test_public_pem):
+    import time
+    import uuid as _uuid
+    import jwt as pyjwt
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+    private_key = load_pem_private_key(test_private_pem.encode(), password=None)
+    jti = str(_uuid.uuid4())
+    now = int(time.time())
+    payload = {"sub": str(_uuid.uuid4()), "jti": jti, "iat": now, "exp": now + 86400}
+    token = pyjwt.encode(payload, private_key, algorithm="EdDSA")
+
+    # Pre-insert JTI into revocation list
+    await redis_client.setex(f"revoked:jti:{jti}", 300, "1")
+
+    r = await async_client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_protected_route_rejects_revoked_device(async_client, redis_client, db_session, test_private_pem):
+    import time
+    import uuid as _uuid
+    import jwt as pyjwt
+    from datetime import UTC, datetime
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import (
+        Encoding, NoEncryption, PrivateFormat, PublicFormat,
+    )
+    from src.data.repositories.devices import DevicesRepository
+
+    # Create a real device in DB
+    device_priv = Ed25519PrivateKey.generate()
+    device_pub_pem = device_priv.public_key().public_bytes(
+        Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+    repo = DevicesRepository(db_session)
+    device = await repo.create(public_key=device_pub_pem, pairing_ip=None)
+    await db_session.commit()
+
+    # Issue a token with iat BEFORE revocation
+    private_key = load_pem_private_key(test_private_pem.encode(), password=None)
+    iat_before_revoke = int(time.time()) - 10
+    payload = {
+        "sub": str(device.id),
+        "jti": str(_uuid.uuid4()),
+        "iat": iat_before_revoke,
+        "exp": iat_before_revoke + 86400,
+    }
+    token = pyjwt.encode(payload, private_key, algorithm="EdDSA")
+
+    # Revoke the device
+    await repo.revoke(device.id)
+    await db_session.commit()
+
+    r = await async_client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
