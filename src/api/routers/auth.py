@@ -23,8 +23,17 @@ async def _get_db() -> AsyncSession:
 
 
 @router.post("/challenge", response_model=ChallengeResponse)
-async def challenge(body: ChallengeRequest, redis=Depends(get_redis)):
-    challenge_hex = await store_challenge(redis, body.bootstrap_secret)
+async def challenge(body: ChallengeRequest, request: Request, redis=Depends(get_redis)):
+    try:
+        challenge_hex = await store_challenge(
+            redis,
+            body.bootstrap_secret,
+            ip=request.client.host if request.client else None,
+        )
+    except ValueError as exc:
+        if str(exc) == "rate_limited":
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        raise HTTPException(status_code=401, detail="Invalid or expired bootstrap secret")
     if not challenge_hex:
         raise HTTPException(status_code=401, detail="Invalid or expired bootstrap secret")
     return ChallengeResponse(challenge=challenge_hex)

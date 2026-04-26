@@ -11,6 +11,7 @@ from src.api.routers.devices import router as devices_router
 from src.api.routers.jobs import router as jobs_router
 from src.api.routers.runs import router as runs_router
 from src.api.routers.applications import router as applications_router
+from src.api.routers.pipeline import router as pipeline_router
 from src.api.middleware.idempotency import IdempotencyMiddleware
 
 
@@ -48,5 +49,6 @@ def create_app() -> FastAPI:
     app.include_router(jobs_router, prefix="/api/v1/jobs", tags=["jobs"])
     app.include_router(runs_router, prefix="/api/v1/runs", tags=["runs"])
     app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
+    app.include_router(pipeline_router, prefix="/api/v1/pipeline", tags=["pipeline"])
 
     return app

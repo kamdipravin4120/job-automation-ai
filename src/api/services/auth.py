@@ -15,8 +15,16 @@ from src.api.core.security import create_jwt
 from src.data.repositories.devices import DevicesRepository
 
 
-async def store_challenge(redis: aioredis.Redis, bootstrap_secret: str) -> str:
+async def store_challenge(redis: aioredis.Redis, bootstrap_secret: str, *, ip: str | None = None) -> str:
     """Verify bootstrap secret exists, store challenge, return challenge hex. Empty string = invalid."""
+    if ip and ip not in ("127.0.0.1", "::1"):
+        rate_key = f"pair:{ip}"
+        count = await redis.incr(rate_key)
+        if count == 1:
+            await redis.expire(rate_key, 60)
+        if count > 5:
+            raise ValueError("rate_limited")
+
     key = f"bootstrap:{bootstrap_secret}"
     if not await redis.exists(key):
         return ""
