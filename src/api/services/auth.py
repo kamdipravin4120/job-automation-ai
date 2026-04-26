@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import json
 import secrets
 import uuid
@@ -15,8 +16,20 @@ from src.api.core.security import create_jwt
 from src.data.repositories.devices import DevicesRepository
 
 
+def _valid_ip(value: str | None) -> str | None:
+    """Return the IP string if valid, else None. Guards against test-client hostnames."""
+    if value is None:
+        return None
+    try:
+        ipaddress.ip_address(value)
+        return value
+    except ValueError:
+        return None
+
+
 async def store_challenge(redis: aioredis.Redis, bootstrap_secret: str, *, ip: str | None = None) -> str:
     """Verify bootstrap secret exists, store challenge, return challenge hex. Empty string = invalid."""
+    ip = _valid_ip(ip)
     if ip and ip not in ("127.0.0.1", "::1"):
         rate_key = f"pair:{ip}"
         # SET NX EX first to atomically create key with TTL, then INCR for subsequent calls.
@@ -72,7 +85,7 @@ async def pair_device(
 
     # Create device row
     repo = DevicesRepository(db)
-    device = await repo.create(public_key=public_key_pem, pairing_ip=pairing_ip)
+    device = await repo.create(public_key=public_key_pem, pairing_ip=_valid_ip(pairing_ip))
     await db.commit()
 
     return create_jwt(device.id)

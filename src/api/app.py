@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,12 +13,19 @@ from src.api.routers.jobs import router as jobs_router
 from src.api.routers.runs import router as runs_router
 from src.api.routers.applications import router as applications_router
 from src.api.routers.pipeline import router as pipeline_router
+from src.api.routers.ws import router as ws_router, pubsub_bridge
 from src.api.middleware.idempotency import IdempotencyMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    task = asyncio.create_task(pubsub_bridge())
     yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
     from src.api.core.redis_dep import _close_redis
     await _close_redis()
 
@@ -50,5 +58,6 @@ def create_app() -> FastAPI:
     app.include_router(runs_router, prefix="/api/v1/runs", tags=["runs"])
     app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
     app.include_router(pipeline_router, prefix="/api/v1/pipeline", tags=["pipeline"])
+    app.include_router(ws_router, prefix="/api/v1", tags=["ws"])
 
     return app
