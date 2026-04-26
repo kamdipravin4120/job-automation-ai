@@ -33,7 +33,7 @@ async def challenge(body: ChallengeRequest, request: Request, redis=Depends(get_
     except ValueError as exc:
         if str(exc) == "rate_limited":
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
-        raise HTTPException(status_code=401, detail="Invalid or expired bootstrap secret")
+        raise  # propagate unexpected ValueError as 500 rather than masking as 401
     if not challenge_hex:
         raise HTTPException(status_code=401, detail="Invalid or expired bootstrap secret")
     return ChallengeResponse(challenge=challenge_hex)

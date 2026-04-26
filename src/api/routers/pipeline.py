@@ -21,7 +21,11 @@ async def trigger_pipeline(
 
     correlation_id = body.correlation_id or str(uuid.uuid4())
 
+    # Import deferred: src.tasks.scrape triggers Celery app init (get_settings) at module
+    # load time, which requires DB/broker env vars unavailable at import time in tests.
+    # task_id ties Celery deduplication to the idempotency key so replays after
+    # the HTTP cache window (24h) don't enqueue a second task at the broker level.
     from src.tasks.scrape import run_scrape
-    run_scrape.apply_async(kwargs={"correlation_id": correlation_id})
+    run_scrape.apply_async(kwargs={"correlation_id": correlation_id}, task_id=idempotency_key)
 
     return TriggerResponse(correlation_id=correlation_id, queued=True)

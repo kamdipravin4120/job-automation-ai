@@ -1,4 +1,8 @@
-import json, secrets, uuid, pytest
+import json
+import secrets
+import uuid
+
+import pytest
 
 
 async def _get_token(async_client, redis_client) -> str:
@@ -34,5 +38,8 @@ async def test_trigger_idempotency_replay(async_client, redis_client, celery_app
     r1 = await async_client.post("/api/v1/pipeline/trigger", headers=headers, json={})
     r2 = await async_client.post("/api/v1/pipeline/trigger", headers=headers, json={})
 
-    assert r1.status_code == r2.status_code
+    # Idempotency is enforced by IdempotencyMiddleware (HTTP cache by key), not by the
+    # endpoint itself. r2 returns the cached r1 response from Redis.
+    assert r1.status_code == 202
+    assert r2.status_code == 202
     assert r1.json()["correlation_id"] == r2.json()["correlation_id"]

@@ -19,9 +19,14 @@ async def store_challenge(redis: aioredis.Redis, bootstrap_secret: str, *, ip: s
     """Verify bootstrap secret exists, store challenge, return challenge hex. Empty string = invalid."""
     if ip and ip not in ("127.0.0.1", "::1"):
         rate_key = f"pair:{ip}"
-        count = await redis.incr(rate_key)
-        if count == 1:
-            await redis.expire(rate_key, 60)
+        # SET NX EX first to atomically create key with TTL, then INCR for subsequent calls.
+        # This closes the INCR+expire TTL-leak window where a crash between the two commands
+        # would leave a key with no expiry.
+        set_result = await redis.set(rate_key, 1, ex=60, nx=True)
+        if set_result is None:  # key already existed
+            count = await redis.incr(rate_key)
+        else:
+            count = 1
         if count > 5:
             raise ValueError("rate_limited")
 
