@@ -26,6 +26,7 @@ def test_create_and_decode_jwt():
     assert "jti" in payload
     assert "iat" in payload
     assert "exp" in payload
+    assert abs(payload["exp"] - (int(time.time()) + 7 * 86400)) < 5
 
 
 def test_decode_jwt_wrong_key_raises():
