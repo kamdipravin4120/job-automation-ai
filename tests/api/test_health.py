@@ -4,7 +4,7 @@ def test_health_returns_ok():
     from src.api.app import create_app
 
     app = create_app()
-    client = TestClient(app)
-    r = client.get("/health")
+    with TestClient(app) as client:
+        r = client.get("/health")
     assert r.status_code == 200
     assert r.json()["status"] == "ok"
