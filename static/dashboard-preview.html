@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Orbital Command — Dashboard Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  /* =========================================================================
+     ORBITAL COMMAND — palette + type tokens
+     ========================================================================= */
+  :root {
+    --bg:         #070a1c;
+    --bg-deep:    #04061a;
+    --surface:    rgba(125, 211, 252, 0.08);
+    --border:     rgba(125, 211, 252, 0.22);
+    --border-lo:  rgba(148, 163, 184, 0.1);
+    --text-hi:    #eef2ff;
+    --text-mid:   #94a3b8;
+    --text-low:   #475569;
+    --primary:    #38bdf8;
+    --primary-glow: rgba(56, 189, 248, 0.45);
+    --accent:     #fca311;
+    --accent-glow: rgba(252, 163, 17, 0.5);
+    --indigo:     #8b5cf6;
+    --indigo-glow: rgba(139, 92, 246, 0.4);
+    --threat:     #ff4365;
+    --success:    #5eead4;
+
+    --display-font: 'Syne', sans-serif;
+    --body-font:    'Space Grotesk', sans-serif;
+    --mono-font:    'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: var(--bg-deep);
+    color: var(--text-hi);
+    font-family: var(--body-font);
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at 18% 8%, rgba(139, 92, 246, 0.18), transparent 55%),
+      radial-gradient(ellipse at 85% 85%, rgba(56, 189, 248, 0.10), transparent 60%),
+      radial-gradient(ellipse at 60% 50%, rgba(252, 163, 17, 0.04), transparent 70%),
+      linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 250px 1fr 340px;
+    grid-template-rows: 64px 1fr 220px;
+    height: 100vh;
+  }
+
+  .nav {
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
+    border-right: 1px solid var(--border-lo);
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    background: rgba(7, 10, 28, 0.65);
+    backdrop-filter: blur(12px);
+  }
+  .brand { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 2.5rem; }
+  .brand .pulse {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 14px var(--primary);
+    animation: pulse-dot 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.4); opacity: 0.55; }
+  }
+  .brand .wordmark {
+    font-family: var(--display-font);
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    color: var(--text-hi);
+  }
+  .brand .kicker {
+    font-family: var(--mono-font);
+    font-size: 0.52rem;
+    letter-spacing: 0.2em;
+    color: var(--text-low);
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+  }
+
+  .nav-section {
+    font-family: var(--mono-font);
+    font-size: 0.52rem;
+    letter-spacing: 0.22em;
+    color: var(--text-low);
+    text-transform: uppercase;
+    margin: 1.2rem 0 0.5rem;
+    padding: 0 0.5rem;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.55rem 0.75rem;
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    color: var(--text-mid);
+    text-decoration: none;
+    border-radius: 3px;
+    border-left: 2px solid transparent;
+    margin-bottom: 0.15rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .nav-item:hover { color: var(--text-hi); background: rgba(56, 189, 248, 0.04); }
+  .nav-item.active {
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.08);
+    border-left-color: var(--primary);
+  }
+  .nav-item .ic { width: 14px; opacity: 0.75; }
+  .nav-item .badge {
+    margin-left: auto;
+    font-size: 0.52rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: rgba(252, 163, 17, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+  }
+
+  .user-hub {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-lo);
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--indigo) 100%);
+    color: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px var(--primary-glow);
+  }
+  .user-meta .name { font-family: var(--body-font); font-size: 0.75rem; color: var(--text-hi); font-weight: 600; }
+  .user-meta .role { font-family: var(--mono-font); font-size: 0.55rem; color: var(--success); letter-spacing: 0.08em; }
+
+  .hud {
+    grid-column: 2 / 4;
+    grid-row: 1 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--border-lo);
+    background: rgba(7, 10, 28, 0.55);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+  }
+  .hud-title {
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-hi);
+    letter-spacing: -0.01em;
+  }
+  .hud-meta {
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    color: var(--text-low);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .hud-meta .live { color: var(--success); margin-left: 0.5rem; }
+  .hud-meta .live::before { content: "●"; margin-right: 0.25rem; }
+  .hud-right { display: flex; gap: 0.6rem; align-items: center; }
+  .hud-clock {
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+    color: var(--text-mid);
+    letter-spacing: 0.12em;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border-lo);
+    border-radius: 2px;
+  }
+
+  .main {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    padding: 1rem;
+    overflow: auto;
+  }
+  .bento {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    grid-auto-rows: minmax(160px, auto);
+    gap: 0.9rem;
+    height: 100%;
+  }
+
+  .tile {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.9rem 1rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.3s ease;
+  }
+  .tile::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0.5;
+  }
+  .tile.priority::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 1; }
+  .tile.threat::before   { background: linear-gradient(90deg, transparent, var(--threat), transparent); opacity: 1; }
+  .tile:hover { box-shadow: 0 0 28px rgba(56, 189, 248, 0.08); }
+
+  .tile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+  }
+  .tile-tag {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    color: var(--primary);
+    text-transform: uppercase;
+  }
+  .tile-tag.accent { color: var(--accent); }
+  .tile-tag.threat { color: var(--threat); }
+
+  .tile-map {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .map-head {
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .map-head h2 {
+    font-family: var(--display-font);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-hi);
+    letter-spacing: -0.005em;
+  }
+  .map-head .stats {
+    display: flex;
+    gap: 1rem;
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    color: var(--text-mid);
+    letter-spacing: 0.1em;
+  }
+  .map-head .stats b { color: var(--accent); font-weight: 500; }
+  .map-svg { flex: 1; width: 100%; display: block; }
+  .legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 1.1rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono-font);
+    font-size: 0.52rem;
+    color: var(--text-low);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .legend span::before {
+    content: "●";
+    margin-right: 0.3rem;
+    font-size: 0.7rem;
+  }
+  .legend .s-primary { color: var(--text-mid); }
+  .legend .s-primary::before { color: var(--primary); }
+  .legend .s-accent::before  { color: var(--accent); }
+  .legend .s-threat::before  { color: var(--threat); }
+
+  .tile-kpi { display: flex; flex-direction: column; gap: 0.4rem; }
+  .kpi-value {
+    font-family: var(--display-font);
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-hi);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    margin: 0.3rem 0 0.25rem;
+  }
+  .kpi-delta {
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    color: var(--success);
+  }
+  .kpi-delta .prev { color: var(--text-low); margin-left: 0.4rem; }
+  .kpi-sub {
+    font-family: var(--body-font);
+    font-size: 0.68rem;
+    color: var(--text-mid);
+    line-height: 1.4;
+  }
+
+  .tile-ring .ring-wrap { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.3rem; }
+  .ring-svg { width: 78px; height: 78px; flex-shrink: 0; }
+  .ring-num {
+    font-family: var(--display-font);
+    font-size: 1.55rem;
+    color: var(--text-hi);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ring-num small { font-size: 0.8rem; color: var(--text-mid); margin-left: 0.15rem; }
+  .ring-label {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    margin-top: 0.1rem;
+  }
+  .ring-list {
+    margin-top: 0.45rem;
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+  }
+  .ring-list div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.18rem 0;
+    border-bottom: 1px dashed var(--border-lo);
+    color: var(--text-mid);
+  }
+  .ring-list div span:last-child { color: var(--primary); }
+
+  .tile-agents { grid-column: 2 / 4; }
+  .agent-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin-top: 0.4rem; }
+  .agent-card {
+    background: rgba(148, 163, 184, 0.04);
+    border: 1px solid var(--border-lo);
+    border-radius: 3px;
+    padding: 0.7rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    position: relative;
+  }
+  .agent-card .id {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--text-low);
+    text-transform: uppercase;
+  }
+  .agent-card .role {
+    font-family: var(--display-font);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-hi);
+  }
+  .agent-card .stat {
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    color: var(--text-mid);
+    margin-top: auto;
+  }
+  .agent-card .stat b { color: var(--accent); font-weight: 500; }
+  .signal {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .agent-card .signal {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+  }
+  .signal.on  { background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse-dot 1.8s infinite; }
+  .signal.run { background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: pulse-dot 1.2s infinite; }
+  .signal.idle { background: var(--text-low); }
+
+  .tile-spark { grid-column: 2 / 4; }
+  .sparkline { width: 100%; height: 80px; margin-top: 0.2rem; display: block; }
+
+  .tray {
+    grid-column: 2 / 3;
+    grid-row: 3 / 4;
+    border-top: 1px solid var(--border-lo);
+    padding: 0.75rem 1rem;
+    overflow: auto;
+    background: rgba(7, 10, 28, 0.45);
+    backdrop-filter: blur(8px);
+  }
+  .tray-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.1rem 0 0.5rem;
+  }
+  .tray-head h3 { font-family: var(--display-font); font-size: 0.85rem; color: var(--text-hi); }
+  .tray-head .count {
+    font-family: var(--mono-font);
+    font-size: 0.58rem;
+    color: var(--text-low);
+    letter-spacing: 0.12em;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 0.4rem 0.7rem;
+    color: var(--text-low);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-lo);
+  }
+  .data-table td {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px dashed var(--border-lo);
+    color: var(--text-mid);
+    vertical-align: middle;
+  }
+  .data-table td.title { color: var(--text-hi); font-family: var(--body-font); font-size: 0.72rem; font-weight: 500; }
+  .data-table .src { color: var(--primary); }
+  .data-table .score-bar {
+    display: inline-block;
+    width: 60px;
+    height: 4px;
+    background: rgba(148, 163, 184, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-right: 0.4rem;
+  }
+  .data-table .score-bar i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 0.18rem 0.5rem;
+    border-radius: 2px;
+    font-size: 0.5rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .status-pill.pending   { background: rgba(252, 163, 17, 0.1);  color: var(--accent); }
+  .status-pill.tailoring { background: rgba(56, 189, 248, 0.1);  color: var(--primary); }
+  .status-pill.dispatched{ background: rgba(94, 234, 212, 0.12); color: var(--success); }
+  .status-pill.closed    { background: rgba(148, 163, 184, 0.1); color: var(--text-low); }
+
+  .row-btn {
+    background: transparent;
+    border: 1px solid var(--border-lo);
+    color: var(--text-mid);
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    padding: 0.25rem 0.55rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .row-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .row-btn.go { border-color: var(--accent); color: var(--accent); }
+  .row-btn.go:hover { background: var(--accent); color: var(--bg-deep); }
+
+  .rail {
+    grid-column: 3 / 4;
+    grid-row: 2 / 4;
+    border-left: 1px solid var(--border-lo);
+    background: rgba(7, 10, 28, 0.55);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .rail-head {
+    padding: 1rem 1.25rem 0.6rem;
+    border-bottom: 1px solid var(--border-lo);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rail-head h3 {
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .rail-head .live {
+    font-family: var(--mono-font);
+    font-size: 0.52rem;
+    color: var(--success);
+    letter-spacing: 0.1em;
+  }
+  .rail-head .live::before { content: "●"; margin-right: 0.2rem; }
+
+  .alert-list {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-lo);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .alert {
+    padding: 0.7rem 0.8rem;
+    background: rgba(255, 67, 101, 0.06);
+    border-left: 2px solid var(--threat);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .alert.warn { background: rgba(252, 163, 17, 0.06); border-left-color: var(--accent); }
+  .alert.info { background: rgba(56, 189, 248, 0.06); border-left-color: var(--primary); }
+  .alert .ttl {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    color: var(--threat);
+    text-transform: uppercase;
+  }
+  .alert.warn .ttl { color: var(--accent); }
+  .alert.info .ttl { color: var(--primary); }
+  .alert .body {
+    font-family: var(--body-font);
+    font-size: 0.72rem;
+    color: var(--text-hi);
+    line-height: 1.35;
+  }
+  .alert .foot {
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    color: var(--text-low);
+  }
+
+  .stream {
+    flex: 1;
+    padding: 0.75rem 1rem 1rem;
+    overflow-y: auto;
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    line-height: 1.65;
+  }
+  .stream .entry {
+    opacity: 0;
+    transform: translateX(8px);
+    animation: slide-in 0.4s ease-out forwards;
+  }
+  @keyframes slide-in { to { opacity: 0.88; transform: translateX(0); } }
+  .stream .ts    { color: var(--text-low); }
+  .stream .agent { color: var(--primary); margin: 0 0.3rem; }
+  .stream .agent.analyst { color: var(--accent); }
+  .stream .agent.liaison { color: var(--indigo); }
+  .stream .agent.threat  { color: var(--threat); }
+  .stream .agent.scout   { color: var(--success); }
+  .stream .msg   { color: var(--text-mid); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.9rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid var(--primary);
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--primary);
+  }
+  .btn:hover {
+    background: var(--primary);
+    color: var(--bg-deep);
+    box-shadow: 0 0 20px var(--primary-glow);
+    transform: translateY(-1px);
+  }
+  .btn.accent {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(252, 163, 17, 0.08);
+  }
+  .btn.accent:hover { background: var(--accent); color: var(--bg-deep); box-shadow: 0 0 20px var(--accent-glow); }
+  .btn.ghost {
+    border-color: var(--border);
+    color: var(--text-mid);
+    background: transparent;
+  }
+  .btn.ghost:hover { border-color: var(--text-hi); color: var(--text-hi); background: transparent; box-shadow: none; }
+
+  .surface-switch {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    z-index: 100;
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.5rem 0.7rem;
+    background: rgba(7, 10, 28, 0.85);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border-lo);
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .surface-switch .swlabel {
+    font-family: var(--mono-font);
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+    color: var(--text-low);
+    text-transform: uppercase;
+    padding: 0.3rem 0.4rem 0.3rem 0.2rem;
+    align-self: center;
+  }
+  .surface-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-mid);
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .surface-btn:hover { border-color: var(--text-hi); color: var(--text-hi); }
+  .surface-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(252, 163, 17, 0.1);
+    box-shadow: 0 0 12px rgba(252, 163, 17, 0.3);
+  }
+  .surface-btn .chip {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: var(--bg);
+    background-image: linear-gradient(var(--chip, transparent), var(--chip, transparent));
+  }
+
+  .sw-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(148, 163, 184, 0.2);
+    margin: 0 0.2rem;
+    align-self: center;
+  }
+  .palette-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-mid);
+    font-family: var(--mono-font);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .palette-btn:hover { border-color: var(--text-hi); color: var(--text-hi); }
+  .palette-btn.active {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: 0 0 12px var(--primary-glow);
+  }
+  .palette-btn .pchip {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: inline-block;
+  }
+
+  /* SATELLITE OPS palette override — cooler, analytical, blue-grey + muted gold */
+  [data-palette="satellite"] body {
+    background-image:
+      radial-gradient(ellipse at 18% 8%, rgba(51, 105, 149, 0.22), transparent 55%),
+      radial-gradient(ellipse at 85% 85%, rgba(84, 152, 191, 0.10), transparent 60%),
+      radial-gradient(ellipse at 60% 50%, rgba(170, 168, 64, 0.03), transparent 70%),
+      linear-gradient(rgba(84, 152, 191, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(84, 152, 191, 0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  }
+  [data-palette="satellite"] .palette-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(170, 168, 64, 0.1);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  @keyframes arc-draw {
+    from { stroke-dashoffset: 260; opacity: 0; }
+    15%  { opacity: 1; }
+    to   { stroke-dashoffset: 0; opacity: 0; }
+  }
+  .arc {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    fill: none;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    animation: arc-draw 4.2s ease-out infinite;
+  }
+  @keyframes marker-pulse {
+    0%   { r: 2; opacity: 1; }
+    100% { r: 16; opacity: 0; }
+  }
+  .marker-core { fill: var(--primary); }
+  .marker-core.accent { fill: var(--accent); }
+  .marker-core.threat { fill: var(--threat); }
+  .marker-ring {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 1;
+    animation: marker-pulse 2.6s ease-out infinite;
+  }
+  .marker-ring.accent { stroke: var(--accent); }
+  .marker-ring.threat { stroke: var(--threat); }
+
+  /* Hi-tech map layers */
+  .graticule {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.09;
+    stroke-width: 0.3;
+    stroke-dasharray: 1 3;
+  }
+  .graticule.prime {
+    opacity: 0.28;
+    stroke-dasharray: 4 3;
+    stroke: var(--accent);
+    stroke-width: 0.4;
+  }
+  .tropic-line {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.12;
+    stroke-width: 0.35;
+    stroke-dasharray: 2 4;
+  }
+  .polar-circle {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.09;
+    stroke-width: 0.35;
+    stroke-dasharray: 1 5;
+  }
+  .lat-label, .lon-label {
+    font-family: var(--mono-font);
+    font-size: 6.5px;
+    fill: var(--text-low);
+    letter-spacing: 0.06em;
+    opacity: 0.6;
+  }
+  .hud-corner {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 1;
+    opacity: 0.55;
+  }
+  .tick {
+    stroke: var(--primary);
+    stroke-width: 0.5;
+    opacity: 0.25;
+  }
+  .tick.major { opacity: 0.55; stroke-width: 0.8; }
+
+  .continent {
+    fill: url(#land-dots);
+    opacity: 0.95;
+  }
+  .continent-outline {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 0.4;
+    opacity: 0.42;
+    filter: drop-shadow(0 0 1.2px rgba(56,189,248,0.6));
+  }
+  .node-label {
+    font-family: var(--mono-font);
+    font-size: 7.5px;
+    fill: var(--text-mid);
+    letter-spacing: 0.08em;
+  }
+
+  @keyframes radar-rotate { to { transform: rotate(360deg); } }
+  .radar-sweep {
+    transform-origin: 310px 180px; /* map viewBox center — 620/2, 360/2 */
+    animation: radar-rotate 9s linear infinite;
+    mix-blend-mode: screen;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .particle {
+    fill: var(--accent);
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+
+  @keyframes reticle-spin { to { transform: rotate(360deg); } }
+  .reticle {
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: reticle-spin 10s linear infinite;
+  }
+
+  @keyframes sonar {
+    0%   { transform: scale(1);  opacity: 0.75; }
+    100% { transform: scale(10); opacity: 0; }
+  }
+  .sonar {
+    transform-origin: center;
+    transform-box: fill-box;
+    fill: none;
+    stroke-width: 1;
+    animation: sonar 3.2s ease-out infinite;
+  }
+  .sonar.d1 { animation-delay: 1s; }
+  .sonar.d2 { animation-delay: 2s; }
+
+  .compass {
+    font-family: var(--mono-font);
+    font-size: 6px;
+    letter-spacing: 0.05em;
+  }
+  .compass-circle {
+    fill: none;
+    stroke: var(--primary);
+    opacity: 0.4;
+    stroke-width: 0.5;
+  }
+
+  .coord-readout {
+    font-family: var(--mono-font);
+    font-size: 7.5px;
+    fill: var(--text-mid);
+    letter-spacing: 0.15em;
+  }
+  .coord-readout .key { fill: var(--accent); }
+
+  .geo-watermark {
+    font-family: var(--display-font);
+    font-size: 32px;
+    font-weight: 800;
+    fill: var(--primary);
+    opacity: 0.04;
+    letter-spacing: 0.08em;
+  }
+
+  @keyframes march { to { stroke-dashoffset: -20; } }
+  .flow-line {
+    stroke: var(--accent);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 3;
+    animation: march 1s linear infinite;
+    fill: none;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tile, .alert, .agent-card { animation: fade-up 0.7s both; }
+  .tile:nth-child(1) { animation-delay: 0.05s; }
+  .tile:nth-child(2) { animation-delay: 0.12s; }
+  .tile:nth-child(3) { animation-delay: 0.19s; }
+  .tile:nth-child(4) { animation-delay: 0.26s; }
+  .tile:nth-child(5) { animation-delay: 0.33s; }
+  .tile:nth-child(6) { animation-delay: 0.4s; }
+
+  @keyframes sweep {
+    0%   { transform: translateY(-100%); opacity: 0; }
+    10%  { opacity: 0.7; }
+    90%  { opacity: 0.7; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  .tile-map::after {
+    content: "";
+    position: absolute;
+    inset: 52px 0 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    animation: sweep 6s linear infinite;
+    pointer-events: none;
+  }
+
+  .stream::-webkit-scrollbar,
+  .tray::-webkit-scrollbar,
+  .main::-webkit-scrollbar { width: 4px; height: 4px; }
+  .stream::-webkit-scrollbar-thumb,
+  .tray::-webkit-scrollbar-thumb,
+  .main::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="surface-switch" id="surface-switch">
+  <span class="swlabel">PALETTE →</span>
+  <button class="palette-btn active" data-palette-key="orbital">
+    <span class="pchip" style="background: linear-gradient(135deg, #38bdf8 0%, #8b5cf6 50%, #fca311 100%);"></span>
+    Orbital Command
+  </button>
+  <button class="palette-btn" data-palette-key="satellite">
+    <span class="pchip" style="background: linear-gradient(135deg, #5498BF 0%, #274B68 50%, #AAA840 100%);"></span>
+    Satellite Ops
+  </button>
+  <span class="sw-divider"></span>
+  <span class="swlabel">SURFACE →</span>
+  <button class="surface-btn active"
+          data-surface="rgba(125, 211, 252, 0.08)"
+          data-border="rgba(125, 211, 252, 0.22)"
+          style="--chip: rgba(125, 211, 252, 0.5);">
+    <span class="chip"></span> Ice
+  </button>
+  <button class="surface-btn"
+          data-surface="rgba(252, 211, 148, 0.07)"
+          data-border="rgba(252, 211, 148, 0.24)"
+          style="--chip: rgba(252, 211, 148, 0.55);">
+    <span class="chip"></span> Amber
+  </button>
+  <button class="surface-btn"
+          data-surface="rgba(196, 181, 253, 0.08)"
+          data-border="rgba(196, 181, 253, 0.24)"
+          style="--chip: rgba(196, 181, 253, 0.55);">
+    <span class="chip"></span> UV
+  </button>
+  <button class="surface-btn"
+          data-surface="rgba(153, 246, 228, 0.07)"
+          data-border="rgba(153, 246, 228, 0.22)"
+          style="--chip: rgba(153, 246, 228, 0.55);">
+    <span class="chip"></span> Mint
+  </button>
+  <button class="surface-btn"
+          data-surface="rgba(255, 255, 255, 0.05)"
+          data-border="rgba(255, 255, 255, 0.15)"
+          style="--chip: rgba(255, 255, 255, 0.4);">
+    <span class="chip"></span> Pearl
+  </button>
+  <button class="surface-btn"
+          data-surface="rgba(148, 163, 184, 0.08)"
+          data-border="rgba(148, 163, 184, 0.2)"
+          style="--chip: rgba(148, 163, 184, 0.45);">
+    <span class="chip"></span> Slate
+  </button>
+</div>
+
+<div class="shell">
+
+  <aside class="nav">
+    <div class="brand">
+      <div class="pulse"></div>
+      <div>
+        <div class="wordmark">Orchestrator</div>
+        <div class="kicker">Orbital Command v2</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Mission</div>
+    <a class="nav-item active"><span class="ic">◆</span> Command Deck</a>
+    <a class="nav-item"><span class="ic">◇</span> Targets <span class="badge">1.2K</span></a>
+    <a class="nav-item"><span class="ic">◈</span> Dispatches</a>
+    <a class="nav-item"><span class="ic">◉</span> Pipeline Runs</a>
+
+    <div class="nav-section">Agents</div>
+    <a class="nav-item"><span class="ic">△</span> Scout</a>
+    <a class="nav-item"><span class="ic">▲</span> Analyst</a>
+    <a class="nav-item"><span class="ic">▽</span> Liaison</a>
+
+    <div class="nav-section">Profile</div>
+    <a class="nav-item"><span class="ic">⬡</span> DNA Map</a>
+    <a class="nav-item"><span class="ic">⬢</span> Brand Calibration</a>
+    <a class="nav-item"><span class="ic">⚙</span> Configuration</a>
+
+    <div class="user-hub">
+      <div class="avatar">F</div>
+      <div class="user-meta">
+        <div class="name">Faheem Ark</div>
+        <div class="role">● SESSION ACTIVE</div>
+      </div>
+    </div>
+  </aside>
+
+  <header class="hud">
+    <div>
+      <div class="hud-title">Command Deck · Active Mission</div>
+      <div class="hud-meta">LAT 37.7749° · LONG -122.4194° <span class="live">PIPELINE ENGAGED</span></div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-clock" id="clock">17:42:08 IST</div>
+      <button class="btn ghost">[ SYNC NOTION ]</button>
+      <button class="btn">[ RUN PIPELINE ]</button>
+      <button class="btn accent">[ DISPATCH ALL ]</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="bento">
+
+      <div class="tile tile-map">
+        <div class="map-head">
+          <h2>Global Mission Map</h2>
+          <div class="stats">
+            <span>TARGETS · <b>1,247</b></span>
+            <span>ACTIVE_ARCS · <b>8</b></span>
+            <span>NODES · <b>12</b></span>
+          </div>
+        </div>
+        <svg class="map-svg" viewBox="0 0 620 360" preserveAspectRatio="xMidYMid meet" id="map-svg"></svg>
+        <div class="legend">
+          <span class="s-primary">SCOUT_SCAN</span>
+          <span class="s-accent">HIGH_MATCH</span>
+          <span class="s-threat">DEADLINE_WARN</span>
+        </div>
+      </div>
+
+      <div class="tile tile-kpi">
+        <div class="tile-head">
+          <span class="tile-tag">TARGETS_SCANNED · 24H</span>
+          <span class="signal on"></span>
+        </div>
+        <div class="kpi-value" data-counter="1247">0</div>
+        <div class="kpi-delta">▲ +84 / 24h <span class="prev">vs. 1,163</span></div>
+        <div class="kpi-sub">6 sources · LinkedIn, Indeed, Glassdoor, Naukri, Wellfound, Otta</div>
+      </div>
+
+      <div class="tile tile-ring priority">
+        <div class="tile-head">
+          <span class="tile-tag accent">DNA_MATCH_AVG</span>
+        </div>
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="2"/>
+            <circle cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2"
+                    stroke-dasharray="94 100" stroke-dashoffset="0" stroke-linecap="round"
+                    transform="rotate(-90 18 18)" style="filter: drop-shadow(0 0 4px var(--accent-glow));"/>
+          </svg>
+          <div>
+            <div class="ring-num">94.2<small>%</small></div>
+            <div class="ring-label">above p88</div>
+          </div>
+        </div>
+        <div class="ring-list">
+          <div><span>Eng Mgmt</span><span>97%</span></div>
+          <div><span>Platform</span><span>92%</span></div>
+          <div><span>AI/ML</span><span>89%</span></div>
+        </div>
+      </div>
+
+      <div class="tile tile-agents">
+        <div class="tile-head">
+          <span class="tile-tag">AGENT_FLEET · 3 ACTIVE</span>
+          <span style="font-family:var(--mono-font);font-size:0.58rem;color:var(--text-low);">LAST_SYNC 14s</span>
+        </div>
+        <div class="agent-row">
+          <div class="agent-card">
+            <span class="signal on"></span>
+            <div class="id">AG_01 · SCOUT</div>
+            <div class="role">Market Discovery</div>
+            <div class="stat">JOBS_FOUND · <b>1,247</b> · last scan 14s ago</div>
+          </div>
+          <div class="agent-card">
+            <span class="signal run"></span>
+            <div class="id">AG_02 · ANALYST</div>
+            <div class="role">DNA Calibration</div>
+            <div class="stat">AVG_MATCH · <b>94.2%</b> · processing 3 targets</div>
+          </div>
+          <div class="agent-card">
+            <span class="signal idle"></span>
+            <div class="id">AG_03 · LIAISON</div>
+            <div class="role">Target Outreach</div>
+            <div class="stat">SENT · <b>12</b> · awaiting 2 ACKs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile tile-spark">
+        <div class="tile-head">
+          <span class="tile-tag">DISPATCH_VELOCITY · 14D</span>
+          <span style="font-family:var(--mono-font);font-size:0.6rem;color:var(--accent);">▲ +32% · 127 total</span>
+        </div>
+        <svg class="sparkline" viewBox="0 0 600 80" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%"  stop-color="var(--accent)" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,62 L45,58 L90,48 L135,52 L180,34 L225,40 L270,26 L315,30 L360,16 L405,22 L450,10 L495,18 L540,6 L600,4"
+                fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                style="filter: drop-shadow(0 0 3px var(--accent-glow));"/>
+          <path d="M0,62 L45,58 L90,48 L135,52 L180,34 L225,40 L270,26 L315,30 L360,16 L405,22 L450,10 L495,18 L540,6 L600,4 L600,80 L0,80 Z"
+                fill="url(#spark-fill)"/>
+          <path class="flow-line" d="M0,62 L45,58 L90,48 L135,52 L180,34 L225,40 L270,26 L315,30 L360,16 L405,22 L450,10 L495,18 L540,6 L600,4"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono-font);font-size:0.54rem;color:var(--text-low);margin-top:0.3rem;">
+          <span>APR 08</span><span>APR 11</span><span>APR 14</span><span>APR 17</span><span>APR 21</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="tray">
+    <div class="tray-head">
+      <h3>Recent Mission Targets</h3>
+      <span class="count">7 ROWS · FILTERED: MATCH ≥ 85%</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Title</th><th>Organization</th><th>Source</th>
+          <th>Match</th><th>Status</th><th>Posted</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="title">VP of Engineering</td>
+          <td>Anthropic</td>
+          <td><span class="src">[LD]</span> LinkedIn</td>
+          <td><span class="score-bar"><i style="width:94%"></i></span>94%</td>
+          <td><span class="status-pill tailoring">Tailoring</span></td>
+          <td>14m</td>
+          <td><button class="row-btn">[ TAILOR ]</button> <button class="row-btn go">[ APPLY ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">Director of Platform</td>
+          <td>OpenAI</td>
+          <td><span class="src">[WF]</span> Wellfound</td>
+          <td><span class="score-bar"><i style="width:91%"></i></span>91%</td>
+          <td><span class="status-pill pending">Pending</span></td>
+          <td>2h</td>
+          <td><button class="row-btn">[ TAILOR ]</button> <button class="row-btn go">[ APPLY ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">Head of AI Infrastructure</td>
+          <td>Cohere</td>
+          <td><span class="src">[LD]</span> LinkedIn</td>
+          <td><span class="score-bar"><i style="width:88%"></i></span>88%</td>
+          <td><span class="status-pill tailoring">Tailoring</span></td>
+          <td>6h</td>
+          <td><button class="row-btn">[ TAILOR ]</button> <button class="row-btn go">[ APPLY ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">Sr. Engineering Manager · ML Platform</td>
+          <td>Mistral AI</td>
+          <td><span class="src">[OT]</span> Otta</td>
+          <td><span class="score-bar"><i style="width:87%"></i></span>87%</td>
+          <td><span class="status-pill dispatched">Dispatched</span></td>
+          <td>1d</td>
+          <td><button class="row-btn">[ VIEW ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">VP Engineering · Infrastructure</td>
+          <td>Scale AI</td>
+          <td><span class="src">[ID]</span> Indeed</td>
+          <td><span class="score-bar"><i style="width:86%"></i></span>86%</td>
+          <td><span class="status-pill dispatched">Dispatched</span></td>
+          <td>1d</td>
+          <td><button class="row-btn">[ VIEW ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">Director of Engineering · Data Platform</td>
+          <td>Databricks</td>
+          <td><span class="src">[LD]</span> LinkedIn</td>
+          <td><span class="score-bar"><i style="width:85%"></i></span>85%</td>
+          <td><span class="status-pill pending">Pending</span></td>
+          <td>2d</td>
+          <td><button class="row-btn">[ TAILOR ]</button> <button class="row-btn go">[ APPLY ]</button></td>
+        </tr>
+        <tr>
+          <td class="title">Head of Platform Engineering</td>
+          <td>Runway</td>
+          <td><span class="src">[WF]</span> Wellfound</td>
+          <td><span class="score-bar"><i style="width:85%"></i></span>85%</td>
+          <td><span class="status-pill closed">Closed</span></td>
+          <td>5d</td>
+          <td><button class="row-btn">[ VIEW ]</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <aside class="rail">
+    <div class="rail-head">
+      <h3>Telemetry · Alerts</h3>
+      <span class="live">LIVE</span>
+    </div>
+    <div class="alert-list">
+      <div class="alert">
+        <span class="ttl">CRIT · T-2d</span>
+        <span class="body">Anthropic VP-Eng closes in 2 days · 412 applicants</span>
+        <span class="foot">Recommended: DISPATCH within 24h</span>
+      </div>
+      <div class="alert warn">
+        <span class="ttl">PRI · 91% MATCH</span>
+        <span class="body">OpenAI Dir. Platform needs DNA calibration</span>
+        <span class="foot">Queued for Analyst</span>
+      </div>
+      <div class="alert info">
+        <span class="ttl">INFO · SCAN COMPLETE</span>
+        <span class="body">Scout completed 1,247-target scan in 38s</span>
+        <span class="foot">Next run in 14m 22s</span>
+      </div>
+    </div>
+
+    <div class="rail-head" style="border-top:1px solid var(--border-lo); padding-top:0.8rem;">
+      <h3>Agent Stream</h3>
+      <span class="live">LIVE</span>
+    </div>
+    <div class="stream" id="stream"></div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  const ns = "http://www.w3.org/2000/svg";
+
+  // =========================================================================
+  // Equirectangular world map — 620×360 viewBox = 360°lon × 180°lat
+  // =========================================================================
+  const W = 620, H = 360;
+  const proj = (lat, lon) => [(lon + 180) * W / 360, (90 - lat) * H / 180];
+
+  // Hand-authored simplified coastlines as [lat, lon] arrays.
+  // Resolution favors recognizability over cartographic accuracy.
+  const CONTINENTS = [
+    // NORTH AMERICA
+    [[71,-156],[68,-165],[64,-166],[60,-162],[58,-152],[55,-135],[50,-128],
+     [46,-124],[40,-124],[35,-121],[34,-119],[30,-116],[23,-110],[21,-106],
+     [16,-95],[14,-91],[11,-87],[9,-84],[8,-78],[9,-82],[13,-83],[16,-88],
+     [18,-88],[21,-87],[21,-90],[20,-97],[26,-97],[29,-95],[30,-90],[30,-84],
+     [28,-82],[25,-80],[31,-81],[33,-79],[36,-76],[39,-74],[42,-71],[45,-66],
+     [47,-64],[47,-60],[49,-54],[51,-56],[54,-58],[58,-62],[60,-65],[62,-78],
+     [67,-83],[69,-95],[70,-125],[70,-141]],
+
+    // GREENLAND
+    [[83,-30],[80,-22],[75,-18],[68,-28],[60,-44],[65,-52],[72,-56],[76,-62],
+     [80,-58],[82,-42]],
+
+    // SOUTH AMERICA
+    [[12,-72],[11,-66],[10,-62],[8,-60],[5,-52],[1,-50],[-2,-44],[-5,-35],
+     [-8,-35],[-13,-39],[-18,-39],[-23,-43],[-25,-48],[-32,-52],[-35,-57],
+     [-39,-62],[-42,-64],[-48,-66],[-53,-68],[-55,-68],[-54,-73],[-45,-74],
+     [-40,-73],[-33,-71],[-27,-71],[-18,-70],[-13,-77],[-7,-80],[-3,-81],
+     [2,-79],[7,-78],[8,-77]],
+
+    // EURASIA (Portugal → Scandinavia → Arctic → Kamchatka →
+    //          Korea → China → SE Asia → India → Arabia → Red Sea → Med)
+    [[36,-9],[43,-9],[44,-1],[48,-4],[49,-1],[51,1],[51,4],[53,7],[54,9],
+     [55,13],[56,16],[59,18],[63,21],[65,24],[67,23],[70,30],[69,33],[68,39],
+     [67,42],[66,50],[67,55],[69,60],[70,69],[74,77],[76,95],[75,110],[73,125],
+     [73,141],[71,160],[70,172],[66,180],[62,172],[56,162],[60,168],[55,155],
+     [52,156],[50,142],[48,142],[46,142],[45,137],[42,131],[40,129],[38,128],
+     [35,129],[34,127],[36,126],[37,125],[39,124],[40,121],[38,121],[35,120],
+     [31,121],[28,121],[24,118],[22,114],[21,110],[18,109],[14,109],[11,108],
+     [10,105],[9,104],[4,104],[1,103],[2,101],[5,100],[7,98],[12,97],[14,94],
+     [17,94],[20,92],[22,89],[21,91],[22,91],[22,89],[21,87],[19,85],[16,82],
+     [13,80],[11,79],[8,78],[8,77],[10,76],[13,74],[16,74],[20,72],[23,68],
+     [25,66],[24,61],[25,58],[22,58],[17,55],[13,48],[13,44],[17,42],[22,38],
+     [28,34],[30,33],[32,34],[34,36],[36,36],[36,33],[37,30],[39,27],[37,23],
+     [35,25],[36,27],[40,26],[41,29],[43,28],[45,30],[46,37],[44,38],[42,41],
+     [40,40],[37,30],[36,27],[38,24],[40,22],[37,22],[37,26],[41,24],[45,14],
+     [44,13],[40,18],[38,15],[40,17],[41,16],[44,10],[44,8],[43,5],[41,3],
+     [38,0],[36,-4],[36,-6]],
+
+    // AFRICA
+    [[36,-5],[35,-2],[37,7],[34,9],[32,15],[31,24],[31,30],[30,32],[27,34],
+     [22,37],[15,40],[12,43],[10,50],[2,45],[-2,42],[-6,39],[-10,40],[-15,40],
+     [-20,35],[-26,33],[-31,30],[-34,26],[-34,20],[-33,18],[-29,16],[-22,14],
+     [-15,12],[-9,13],[-6,12],[-5,9],[2,9],[4,7],[6,3],[5,-2],[5,-8],[8,-13],
+     [12,-17],[18,-16],[21,-17],[26,-14],[29,-10],[32,-9]],
+
+    // AUSTRALIA
+    [[-14,125],[-16,129],[-12,130],[-12,137],[-17,141],[-14,144],[-20,149],
+     [-27,153],[-34,151],[-38,145],[-39,143],[-35,138],[-34,135],[-32,134],
+     [-32,133],[-35,120],[-35,115],[-32,115],[-26,113],[-22,114],[-20,118],
+     [-18,122]],
+
+    // ANTARCTICA (band across the bottom)
+    [[-75,-180],[-72,-160],[-78,-140],[-73,-120],[-70,-95],[-74,-60],
+     [-68,-65],[-65,-60],[-66,-56],[-72,-40],[-75,-25],[-70,0],[-68,20],
+     [-69,45],[-67,65],[-66,85],[-68,105],[-66,125],[-68,145],[-74,165],
+     [-78,170],[-85,180],[-85,-180]],
+
+    // GREAT BRITAIN + IRELAND (simplified as one mass)
+    [[58,-5],[58,-2],[54,-1],[52,1],[50,-1],[50,-5],[52,-5],[52,-9],[55,-7]],
+
+    // JAPAN (Honshu primary)
+    [[45,141],[42,141],[38,141],[35,140],[34,137],[33,131],[34,130],[36,133],
+     [39,139],[42,140]],
+
+    // MADAGASCAR
+    [[-12,49],[-15,50],[-19,49],[-22,48],[-25,46],[-24,44],[-20,44],[-15,46]],
+
+    // NEW ZEALAND (North+South joined for simplicity)
+    [[-34,173],[-37,176],[-40,176],[-41,174],[-41,173],[-44,171],[-46,167],
+     [-46,170],[-44,173]],
+
+    // SUMATRA
+    [[5,95],[3,98],[-3,102],[-5,105],[-2,101],[2,97]],
+
+    // BORNEO
+    [[7,117],[4,118],[-1,117],[-3,114],[-3,110],[0,109],[4,113]],
+
+    // NEW GUINEA
+    [[-1,131],[-4,134],[-9,140],[-10,144],[-8,147],[-6,149],[-3,142],[-1,137]],
+  ];
+
+  const NODES = [
+    { id: "SF",  lat:  37.77, lon: -122.42, type: "command" },
+    { id: "NYC", lat:  40.71, lon:  -74.00, type: "primary" },
+    { id: "LDN", lat:  51.51, lon:   -0.13, type: "accent"  },
+    { id: "BER", lat:  52.52, lon:   13.40, type: "primary" },
+    { id: "LAG", lat:   6.52, lon:    3.37, type: "threat"  },
+    { id: "DXB", lat:  25.28, lon:   55.34, type: "primary" },
+    { id: "BLR", lat:  12.97, lon:   77.59, type: "accent"  },
+    { id: "TKY", lat:  35.68, lon:  139.69, type: "primary" },
+    { id: "SHA", lat:  31.22, lon:  121.46, type: "primary" },
+    { id: "SYD", lat: -33.87, lon:  151.21, type: "accent"  },
+    { id: "SAO", lat: -23.55, lon:  -46.63, type: "primary" },
+    { id: "BOG", lat:   4.71, lon:  -74.07, type: "threat"  },
+  ];
+  const ARCS = [[0,2],[1,7],[6,2],[2,10],[7,9],[3,6],[5,1],[11,0],[8,9]];
+
+  const svg = document.getElementById("map-svg");
+  const frag = document.createDocumentFragment();
+
+  const COLORS = ["var(--accent)", "var(--primary)", "var(--indigo)"];
+  const COLOR_HEX = ["#fca311", "#38bdf8", "#8b5cf6"];
+
+  // -------------------------------------------------------------------------
+  // Layer 0 · SVG <defs> — dot pattern, atmosphere gradient, radar gradient
+  // Built with DOM APIs (no innerHTML) to avoid XSS/injection surface.
+  // -------------------------------------------------------------------------
+  const defs = document.createElementNS(ns, "defs");
+
+  const pattern = document.createElementNS(ns, "pattern");
+  pattern.setAttribute("id", "land-dots");
+  pattern.setAttribute("x", "0"); pattern.setAttribute("y", "0");
+  pattern.setAttribute("width", "4"); pattern.setAttribute("height", "4");
+  pattern.setAttribute("patternUnits", "userSpaceOnUse");
+  const patternDot = document.createElementNS(ns, "circle");
+  patternDot.setAttribute("cx", "2"); patternDot.setAttribute("cy", "2");
+  patternDot.setAttribute("r", "0.72");
+  patternDot.setAttribute("fill", "#38bdf8");
+  patternDot.setAttribute("opacity", "0.62");
+  pattern.appendChild(patternDot);
+  defs.appendChild(pattern);
+
+  const atmosGrad = document.createElementNS(ns, "radialGradient");
+  atmosGrad.setAttribute("id", "earth-atmos");
+  atmosGrad.setAttribute("cx", "50%"); atmosGrad.setAttribute("cy", "50%");
+  atmosGrad.setAttribute("r", "72%");
+  [
+    ["0%", "rgba(56,189,248,0.14)"],
+    ["55%", "rgba(56,189,248,0.04)"],
+    ["100%", "rgba(56,189,248,0)"],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(ns, "stop");
+    stop.setAttribute("offset", offset);
+    stop.setAttribute("stop-color", color);
+    atmosGrad.appendChild(stop);
+  });
+  defs.appendChild(atmosGrad);
+
+  const radarGrad = document.createElementNS(ns, "linearGradient");
+  radarGrad.setAttribute("id", "radar-grad");
+  radarGrad.setAttribute("gradientUnits", "userSpaceOnUse");
+  radarGrad.setAttribute("x1", String(W / 2));
+  radarGrad.setAttribute("y1", String(H / 2));
+  radarGrad.setAttribute("x2", String(W / 2 + 200));
+  radarGrad.setAttribute("y2", String(H / 2));
+  [
+    ["0%", "rgba(252,163,17,0)"],
+    ["70%", "rgba(252,163,17,0.08)"],
+    ["100%", "rgba(252,163,17,0.55)"],
+  ].forEach(([offset, color]) => {
+    const stop = document.createElementNS(ns, "stop");
+    stop.setAttribute("offset", offset);
+    stop.setAttribute("stop-color", color);
+    radarGrad.appendChild(stop);
+  });
+  defs.appendChild(radarGrad);
+
+  frag.appendChild(defs);
+
+  // -------------------------------------------------------------------------
+  // Layer 1 · atmospheric background wash
+  // -------------------------------------------------------------------------
+  const atmos = document.createElementNS(ns, "rect");
+  atmos.setAttribute("x", 0); atmos.setAttribute("y", 0);
+  atmos.setAttribute("width", W); atmos.setAttribute("height", H);
+  atmos.setAttribute("fill", "url(#earth-atmos)");
+  frag.appendChild(atmos);
+
+  // -------------------------------------------------------------------------
+  // Layer 2 · graticule — meridians, parallels, equator, prime, tropics, polar
+  // -------------------------------------------------------------------------
+  for (let lon = -150; lon <= 150; lon += 30) {
+    const [x] = proj(0, lon);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", x); l.setAttribute("x2", x);
+    l.setAttribute("y1", 0); l.setAttribute("y2", H);
+    l.setAttribute("class", lon === 0 ? "graticule prime" : "graticule");
+    frag.appendChild(l);
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const [, y] = proj(lat, 0);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", W);
+    l.setAttribute("y1", y); l.setAttribute("y2", y);
+    l.setAttribute("class", lat === 0 ? "graticule prime" : "graticule");
+    frag.appendChild(l);
+  }
+  [23.5, -23.5].forEach((lat) => {
+    const [, y] = proj(lat, 0);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", W);
+    l.setAttribute("y1", y); l.setAttribute("y2", y);
+    l.setAttribute("class", "tropic-line");
+    frag.appendChild(l);
+  });
+  [66.5, -66.5].forEach((lat) => {
+    const [, y] = proj(lat, 0);
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", W);
+    l.setAttribute("y1", y); l.setAttribute("y2", y);
+    l.setAttribute("class", "polar-circle");
+    frag.appendChild(l);
+  });
+
+  // Graticule labels
+  for (let lon = -150; lon <= 150; lon += 30) {
+    const [x] = proj(0, lon);
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", x);
+    t.setAttribute("y", H - 5);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("class", "lon-label");
+    t.textContent = lon === 0 ? "0°" : lon > 0 ? `${lon}°E` : `${Math.abs(lon)}°W`;
+    frag.appendChild(t);
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const [, y] = proj(lat, 0);
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", 6);
+    t.setAttribute("y", y - 3);
+    t.setAttribute("class", "lat-label");
+    t.textContent = lat === 0 ? "EQ" : lat > 0 ? `${lat}°N` : `${Math.abs(lat)}°S`;
+    frag.appendChild(t);
+  }
+
+  // -------------------------------------------------------------------------
+  // Layer 3 · continents — stippled fill + glowing outline
+  // -------------------------------------------------------------------------
+  const continentsG = document.createElementNS(ns, "g");
+  continentsG.setAttribute("class", "continents");
+  CONTINENTS.forEach((coords) => {
+    const d = "M " + coords.map(([lat, lon]) => proj(lat, lon).map((n) => n.toFixed(1)).join(",")).join(" L ") + " Z";
+    const fill = document.createElementNS(ns, "path");
+    fill.setAttribute("d", d);
+    fill.setAttribute("class", "continent");
+    continentsG.appendChild(fill);
+    const outline = document.createElementNS(ns, "path");
+    outline.setAttribute("d", d);
+    outline.setAttribute("class", "continent-outline");
+    continentsG.appendChild(outline);
+  });
+  frag.appendChild(continentsG);
+
+  // -------------------------------------------------------------------------
+  // Layer 4 · geo watermark (beneath HUD, above map)
+  // -------------------------------------------------------------------------
+  const wm = document.createElementNS(ns, "text");
+  wm.setAttribute("x", W / 2);
+  wm.setAttribute("y", 28);
+  wm.setAttribute("text-anchor", "middle");
+  wm.setAttribute("class", "geo-watermark");
+  wm.textContent = "EARTH · EQUIRECTANGULAR · WGS84";
+  frag.appendChild(wm);
+
+  // -------------------------------------------------------------------------
+  // Layer 5 · edge ticks (every 5° minor, 30° major)
+  // -------------------------------------------------------------------------
+  for (let lat = -90; lat <= 90; lat += 5) {
+    const [, y] = proj(lat, 0);
+    const isMajor = lat % 30 === 0;
+    const len = isMajor ? 8 : 3;
+    [{ x1: 0, x2: len }, { x1: W, x2: W - len }].forEach(({ x1, x2 }) => {
+      const t = document.createElementNS(ns, "line");
+      t.setAttribute("x1", x1); t.setAttribute("x2", x2);
+      t.setAttribute("y1", y); t.setAttribute("y2", y);
+      t.setAttribute("class", "tick" + (isMajor ? " major" : ""));
+      frag.appendChild(t);
+    });
+  }
+  for (let lon = -180; lon <= 180; lon += 5) {
+    const [x] = proj(0, lon);
+    const isMajor = lon % 30 === 0;
+    const len = isMajor ? 8 : 3;
+    [{ y1: 0, y2: len }, { y1: H, y2: H - len }].forEach(({ y1, y2 }) => {
+      const t = document.createElementNS(ns, "line");
+      t.setAttribute("x1", x); t.setAttribute("x2", x);
+      t.setAttribute("y1", y1); t.setAttribute("y2", y2);
+      t.setAttribute("class", "tick" + (isMajor ? " major" : ""));
+      frag.appendChild(t);
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Layer 6 · HUD corner brackets
+  // -------------------------------------------------------------------------
+  const B = 18, P = 6;
+  [
+    [P, P, 1, 1],
+    [W - P, P, -1, 1],
+    [P, H - P, 1, -1],
+    [W - P, H - P, -1, -1],
+  ].forEach(([x, y, dx, dy]) => {
+    const p = document.createElementNS(ns, "path");
+    p.setAttribute("d", `M${x},${y + dy * B} L${x},${y} L${x + dx * B},${y}`);
+    p.setAttribute("class", "hud-corner");
+    frag.appendChild(p);
+  });
+
+  // -------------------------------------------------------------------------
+  // Layer 7 · rotating radar sweep wedge (centered on map)
+  // -------------------------------------------------------------------------
+  const sweepCx = W / 2, sweepCy = H / 2, sweepR = 200;
+  const a0 = 0, a1 = -40 * Math.PI / 180;
+  const p0x = sweepCx + sweepR * Math.cos(a0), p0y = sweepCy + sweepR * Math.sin(a0);
+  const p1x = sweepCx + sweepR * Math.cos(a1), p1y = sweepCy + sweepR * Math.sin(a1);
+  const sweepArc = document.createElementNS(ns, "path");
+  sweepArc.setAttribute(
+    "d",
+    `M ${sweepCx} ${sweepCy} L ${p0x.toFixed(1)} ${p0y.toFixed(1)} A ${sweepR} ${sweepR} 0 0 0 ${p1x.toFixed(1)} ${p1y.toFixed(1)} Z`
+  );
+  sweepArc.setAttribute("fill", "url(#radar-grad)");
+  sweepArc.setAttribute("class", "radar-sweep");
+  frag.appendChild(sweepArc);
+
+  // -------------------------------------------------------------------------
+  // Layer 8 · arcs + flowing data particles
+  // -------------------------------------------------------------------------
+  const XLINK = "http://www.w3.org/1999/xlink";
+  ARCS.forEach(([sIdx, tIdx], i) => {
+    const s = NODES[sIdx], t = NODES[tIdx];
+    const [sx, sy] = proj(s.lat, s.lon);
+    const [tx, ty] = proj(t.lat, t.lon);
+    const mx = (sx + tx) / 2, my = (sy + ty) / 2;
+    const dist = Math.hypot(tx - sx, ty - sy);
+    const lift = Math.min(dist * 0.38, 130);
+    const d = `M${sx.toFixed(1)},${sy.toFixed(1)} Q${mx.toFixed(1)},${(my - lift).toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)}`;
+    const pathId = `arc-${i}`;
+    const color = COLORS[i % 3];
+    const hex = COLOR_HEX[i % 3];
+
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("id", pathId);
+    path.setAttribute("d", d);
+    path.setAttribute("class", "arc");
+    path.setAttribute("stroke", color);
+    path.style.animationDelay = `${i * 0.5}s`;
+    path.style.filter = "drop-shadow(0 0 3px currentColor)";
+    frag.appendChild(path);
+
+    const particle = document.createElementNS(ns, "circle");
+    particle.setAttribute("r", 2.2);
+    particle.setAttribute("fill", hex);
+    particle.setAttribute("class", "particle");
+    particle.style.color = hex;
+    const anim = document.createElementNS(ns, "animateMotion");
+    anim.setAttribute("dur", `${3 + (i % 3) * 0.6}s`);
+    anim.setAttribute("repeatCount", "indefinite");
+    anim.setAttribute("begin", `${i * 0.35}s`);
+    anim.setAttribute("rotate", "auto");
+    const mpath = document.createElementNS(ns, "mpath");
+    mpath.setAttributeNS(XLINK, "xlink:href", `#${pathId}`);
+    mpath.setAttribute("href", `#${pathId}`);
+    anim.appendChild(mpath);
+    particle.appendChild(anim);
+    frag.appendChild(particle);
+  });
+
+  // -------------------------------------------------------------------------
+  // Layer 9 · nodes — sonar, reticle, ring, core, label
+  // -------------------------------------------------------------------------
+  const COMMAND_IDX = 0;
+  NODES.forEach((n, i) => {
+    const [cx, cy] = proj(n.lat, n.lon);
+    const visualType = n.type === "command" ? "accent" : n.type;
+
+    if (i === COMMAND_IDX) {
+      ["", "d1", "d2"].forEach((d) => {
+        const sonar = document.createElementNS(ns, "circle");
+        sonar.setAttribute("cx", cx); sonar.setAttribute("cy", cy);
+        sonar.setAttribute("r", 5);
+        sonar.setAttribute("class", `sonar ${d}`.trim());
+        sonar.setAttribute("stroke", "var(--accent)");
+        frag.appendChild(sonar);
+      });
+    }
+
+    if (n.type === "accent") {
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("class", "reticle");
+      g.setAttribute("transform", `translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
+      const bracketD = "M-9,-6 L-9,-9 L-6,-9 M6,-9 L9,-9 L9,-6 M-9,6 L-9,9 L-6,9 M6,9 L9,9 L9,6";
+      const br = document.createElementNS(ns, "path");
+      br.setAttribute("d", bracketD);
+      br.setAttribute("stroke", "var(--accent)");
+      br.setAttribute("stroke-width", "0.9");
+      br.setAttribute("fill", "none");
+      br.setAttribute("opacity", "0.75");
+      g.appendChild(br);
+      const h = document.createElementNS(ns, "line");
+      h.setAttribute("x1", -4); h.setAttribute("x2", 4);
+      h.setAttribute("y1", 0); h.setAttribute("y2", 0);
+      h.setAttribute("stroke", "var(--accent)");
+      h.setAttribute("stroke-width", "0.4"); h.setAttribute("opacity", "0.5");
+      g.appendChild(h);
+      const v = document.createElementNS(ns, "line");
+      v.setAttribute("x1", 0); v.setAttribute("x2", 0);
+      v.setAttribute("y1", -4); v.setAttribute("y2", 4);
+      v.setAttribute("stroke", "var(--accent)");
+      v.setAttribute("stroke-width", "0.4"); v.setAttribute("opacity", "0.5");
+      g.appendChild(v);
+      frag.appendChild(g);
+    }
+
+    const ring = document.createElementNS(ns, "circle");
+    ring.setAttribute("cx", cx); ring.setAttribute("cy", cy);
+    ring.setAttribute("r", 2);
+    ring.setAttribute("class", "marker-ring" + (visualType !== "primary" ? " " + visualType : ""));
+    ring.style.animationDelay = `${(i % 5) * 0.35}s`;
+    frag.appendChild(ring);
+
+    const core = document.createElementNS(ns, "circle");
+    core.setAttribute("cx", cx); core.setAttribute("cy", cy);
+    core.setAttribute("r", 2.4);
+    core.setAttribute("class", "marker-core" + (visualType !== "primary" ? " " + visualType : ""));
+    core.style.filter = "drop-shadow(0 0 5px currentColor)";
+    frag.appendChild(core);
+
+    const text = document.createElementNS(ns, "text");
+    text.setAttribute("x", cx + 7);
+    text.setAttribute("y", cy + 3);
+    text.setAttribute("class", "node-label");
+    text.textContent = n.id;
+    frag.appendChild(text);
+  });
+
+  // -------------------------------------------------------------------------
+  // Layer 7 · compass rose (bottom-left)
+  // -------------------------------------------------------------------------
+  const compass = document.createElementNS(ns, "g");
+  compass.setAttribute("transform", `translate(32 ${H - 32})`);
+  const co1 = document.createElementNS(ns, "circle");
+  co1.setAttribute("r", 13); co1.setAttribute("class", "compass-circle");
+  compass.appendChild(co1);
+  const co2 = document.createElementNS(ns, "circle");
+  co2.setAttribute("r", 7); co2.setAttribute("class", "compass-circle");
+  compass.appendChild(co2);
+  // cardinal ticks
+  ["N", "E", "S", "W"].forEach((dir, j) => {
+    const angle = (j * 90 - 90) * Math.PI / 180;
+    const tx = Math.cos(angle) * 17;
+    const ty = Math.sin(angle) * 17;
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", tx);
+    t.setAttribute("y", ty + 2);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("class", "compass");
+    t.setAttribute("fill", dir === "N" ? "var(--accent)" : "var(--text-low)");
+    t.textContent = dir;
+    compass.appendChild(t);
+  });
+  // north pointer
+  const pointer = document.createElementNS(ns, "path");
+  pointer.setAttribute("d", "M0,-11 L-2.5,0 L2.5,0 Z");
+  pointer.setAttribute("fill", "var(--accent)");
+  pointer.setAttribute("opacity", "0.85");
+  compass.appendChild(pointer);
+  const hub = document.createElementNS(ns, "circle");
+  hub.setAttribute("r", 1.5); hub.setAttribute("fill", "var(--accent)");
+  compass.appendChild(hub);
+  frag.appendChild(compass);
+
+  // -------------------------------------------------------------------------
+  // Layer 8 · live coord readout (top-right)
+  // -------------------------------------------------------------------------
+  const readoutBg = document.createElementNS(ns, "rect");
+  readoutBg.setAttribute("x", W - 175);
+  readoutBg.setAttribute("y", 12);
+  readoutBg.setAttribute("width", 160);
+  readoutBg.setAttribute("height", 28);
+  readoutBg.setAttribute("fill", "rgba(7, 10, 28, 0.6)");
+  readoutBg.setAttribute("stroke", "var(--border)");
+  readoutBg.setAttribute("stroke-width", "0.5");
+  readoutBg.setAttribute("rx", "2");
+  frag.appendChild(readoutBg);
+
+  const readoutKey = document.createElementNS(ns, "text");
+  readoutKey.setAttribute("x", W - 165);
+  readoutKey.setAttribute("y", 22);
+  readoutKey.setAttribute("class", "coord-readout key");
+  readoutKey.textContent = "TRACKING →";
+  frag.appendChild(readoutKey);
+
+  const readout = document.createElementNS(ns, "text");
+  readout.setAttribute("id", "coord-readout");
+  readout.setAttribute("x", W - 165);
+  readout.setAttribute("y", 34);
+  readout.setAttribute("class", "coord-readout");
+  readout.textContent = "37.77N  122.42W  SF_CMD";
+  frag.appendChild(readout);
+
+  svg.appendChild(frag);
+
+  // Cycle the coord readout through nodes
+  const COORDS = [
+    "37.77N  122.42W  SF_CMD",
+    "40.71N  74.00W   NYC_OPS",
+    "51.50N  00.12W   LDN_INT",
+    "52.52N  13.40E   BER_REL",
+    "25.27N  55.30E   DXB_HUB",
+    "12.97N  77.59E   BLR_ENG",
+    "35.68N  139.69E  TKY_PAC",
+    "33.86S  151.20E  SYD_DWN",
+    "23.55S  46.63W   SAO_LAT",
+  ];
+  let coordIdx = 0;
+  setInterval(() => {
+    coordIdx = (coordIdx + 1) % COORDS.length;
+    const r = document.getElementById("coord-readout");
+    if (r) r.textContent = COORDS[coordIdx];
+  }, 2400);
+
+  // =========================================================================
+  // Counter animation
+  // =========================================================================
+  document.querySelectorAll("[data-counter]").forEach((el) => {
+    const target = parseInt(el.dataset.counter, 10);
+    const dur = 1600;
+    const start = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
+    })(start);
+  });
+
+  // =========================================================================
+  // Live clock
+  // =========================================================================
+  const clock = document.getElementById("clock");
+  const pad = (n) => String(n).padStart(2, "0");
+  setInterval(() => {
+    const d = new Date();
+    clock.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} IST`;
+  }, 1000);
+
+  // =========================================================================
+  // Agent stream (safe DOM construction — no innerHTML)
+  // =========================================================================
+  const stream = document.getElementById("stream");
+  const LOG_LINES = [
+    ["scout",   "Market scan → 1,247 targets · 38 above threshold."],
+    ["analyst", "DNA calib v12 → 94.2% match on Anthropic.VP_Eng."],
+    ["liaison", "Dispatch queue · 3 outbound · 2 awaiting ACK."],
+    ["threat",  "Deadline warn · Anthropic VP-Eng closes T-2d."],
+    ["scout",   "New source detected · Otta → +14 targets."],
+    ["analyst", "Profile calibration → +0.8% avg match."],
+    ["liaison", "ACK received · OpenAI Dir. Platform · status SEEN."],
+    ["scout",   "Scheduled scan in 14m 22s · 6 sources configured."],
+    ["analyst", "Tailoring · Mistral Sr. Eng Mgr · DNA v12 → v13."],
+    ["threat",  "Competition signal · 412 applicants on Anthropic."],
+  ];
+  let logIdx = 0;
+  function addLog() {
+    const [agent, msg] = LOG_LINES[logIdx % LOG_LINES.length];
+    const d = new Date();
+    const ts = `[${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
+
+    const entry = document.createElement("div");
+    entry.className = "entry";
+
+    const tsEl = document.createElement("span");
+    tsEl.className = "ts";
+    tsEl.textContent = ts;
+
+    const agentEl = document.createElement("span");
+    agentEl.className = "agent " + agent;
+    agentEl.textContent = agent + ":";
+
+    const msgEl = document.createElement("span");
+    msgEl.className = "msg";
+    msgEl.textContent = msg;
+
+    entry.appendChild(tsEl);
+    entry.appendChild(document.createTextNode(" "));
+    entry.appendChild(agentEl);
+    entry.appendChild(document.createTextNode(" "));
+    entry.appendChild(msgEl);
+
+    stream.appendChild(entry);
+    stream.scrollTop = stream.scrollHeight;
+    while (stream.children.length > 40) stream.removeChild(stream.firstChild);
+    logIdx++;
+  }
+  for (let i = 0; i < 6; i++) addLog();
+  setInterval(addLog, 2800);
+
+  // =========================================================================
+  // Palette + surface switchers
+  // =========================================================================
+  const switcher = document.getElementById("surface-switch");
+  const root = document.documentElement;
+
+  const PALETTES = {
+    orbital: {
+      "--bg":            "#070a1c",
+      "--bg-deep":       "#04061a",
+      "--surface":       "rgba(125, 211, 252, 0.08)",
+      "--border":        "rgba(125, 211, 252, 0.22)",
+      "--border-lo":     "rgba(148, 163, 184, 0.1)",
+      "--text-hi":       "#eef2ff",
+      "--text-mid":      "#94a3b8",
+      "--text-low":      "#475569",
+      "--primary":       "#38bdf8",
+      "--primary-glow":  "rgba(56, 189, 248, 0.45)",
+      "--accent":        "#fca311",
+      "--accent-glow":   "rgba(252, 163, 17, 0.5)",
+      "--indigo":        "#8b5cf6",
+      "--indigo-glow":   "rgba(139, 92, 246, 0.4)",
+      "--threat":        "#ff4365",
+      "--success":       "#5eead4",
+    },
+    satellite: {
+      "--bg":            "#030508",
+      "--bg-deep":       "#010204",
+      "--surface":       "rgba(39, 75, 104, 0.5)",
+      "--border":        "rgba(84, 152, 191, 0.28)",
+      "--border-lo":     "rgba(84, 152, 191, 0.1)",
+      "--text-hi":       "#d7e5e9",
+      "--text-mid":      "#8b9ca5",
+      "--text-low":      "#4a5560",
+      "--primary":       "#5498bf",
+      "--primary-glow":  "rgba(84, 152, 191, 0.45)",
+      "--accent":        "#aaa840",
+      "--accent-glow":   "rgba(170, 168, 64, 0.5)",
+      "--indigo":        "#336995",
+      "--indigo-glow":   "rgba(51, 105, 149, 0.4)",
+      "--threat":        "#c0583a",
+      "--success":       "#7aa874",
+    },
+  };
+
+  function applyPalette(key) {
+    const p = PALETTES[key];
+    if (!p) return;
+    Object.entries(p).forEach(([prop, val]) => root.style.setProperty(prop, val));
+    root.setAttribute("data-palette", key);
+  }
+
+  // Palette buttons
+  switcher.querySelectorAll(".palette-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.paletteKey;
+      applyPalette(key);
+      switcher.querySelectorAll(".palette-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      // Reset surface switcher state since palette overrides --surface
+      switcher.querySelectorAll(".surface-btn").forEach((b) => b.classList.remove("active"));
+    });
+  });
+
+  // Surface buttons (independent override of --surface/--border)
+  switcher.querySelectorAll(".surface-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.style.setProperty("--surface", btn.dataset.surface);
+      root.style.setProperty("--border",  btn.dataset.border);
+      switcher.querySelectorAll(".surface-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  // Seed the attribute on load
+  root.setAttribute("data-palette", "orbital");
+})();
+</script>
+</body>
+</html>

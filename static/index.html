@@ -3,147 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Automation AI | Dashboard</title>
+    <title>Job Automation AI | Command Console</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="dark-mode">
+<body class="command-deck">
+    <!-- TACTICAL SIDEBAR -->
     <nav class="sidebar">
-        <div class="logo">
-            <span class="logo-icon">🚀</span>
-            <span class="logo-text">AutoApply</span>
+        <div class="brand-tactical">
+            <div class="pulse-ring"></div>
+            <span>ORCHESTRATOR</span>
         </div>
         <ul class="nav-links">
-            <li class="active"><a href="#dashboard">Dashboard</a></li>
-            <li><a href="#applications">Applications</a></li>
-            <li><a href="#profile">Profile</a></li>
-            <li><a href="#settings">Settings</a></li>
+            <li class="active"><a href="#dashboard"><span class="icon">🛰️</span> CORE_NERVE</a></li>
+            <li><a href="#applications"><span class="icon">📋</span> TARGETS</a></li>
+            <li><a href="#linkedin"><span class="icon">✨</span> BRAND_CALIB</a></li>
+            <li><a href="#profile"><span class="icon">👤</span> IDENTITY</a></li>
+            <li><a href="#settings"><span class="icon">⚙️</span> SYS_CONF</a></li>
         </ul>
-        <div class="user-info">
-            <div class="avatar" id="user-avatar">?</div>
+        <div class="user-hub">
+            <div id="user-avatar" class="avatar-ring">?</div>
             <div class="user-meta">
-                <p class="user-name" id="user-name">Guest User</p>
-                <span class="session-status authenticated">Session Active</span>
+                <div id="user-name" class="name">GUEST_USER</div>
+                <div class="status">SESSION: ACTIVE</div>
             </div>
         </div>
     </nav>
 
-    <main class="content">
-        <header class="top-nav">
-            <h1>Dashboard Overview</h1>
-            <div class="actions">
-                <button class="btn btn-secondary" onclick="triggerSync()">Sync Notion</button>
-                <button class="btn btn-primary" onclick="showUploadModal()">Upload Resume</button>
-            </div>
-        </header>
+    <!-- MISSION LOG SIDEBAR (TRACING) -->
+    <aside class="mission-log">
+        <div class="log-header">
+            <span class="tag">ENGINEERING_LOG.RAW</span>
+            <div class="status-dot online"></div>
+        </div>
+        <div id="terminal-stream" class="terminal">
+            <!-- Entries added by JS -->
+        </div>
+    </aside>
 
-        <div class="bento-grid">
-            <!-- Stats Row -->
-            <div class="card card-small stats-card" id="stat-applied">
-                <h3>Total Applied</h3>
-                <p class="stat-value">0</p>
-                <span class="trend up">+15% this week</span>
-            </div>
-            <div class="card card-small stats-card" id="stat-matches">
-                <h3>High Matches</h3>
-                <p class="stat-value">0</p>
-                <span class="trend">Ready for review</span>
-            </div>
-            <div class="card card-small stats-card" id="stat-interviews">
-                <h3>Interviews</h3>
-                <p class="stat-value">0</p>
-                <span class="trend">Upcoming</span>
-            </div>
+    <!-- MISSION CONTROL CENTER (TOP HEADER) -->
+    <header class="hud-header" style="grid-column: 2/3; grid-row: 1/2; margin-bottom: 0; padding: 1rem 1.5rem;">
+        <div class="mission-status">
+            <span id="view-title">SYSTEM_CORE_IDLE</span>
+            <span class="location">LOCATION: EARTH_ORBITAL_STATION</span>
+        </div>
+        <div class="quick-actions" style="display: flex; gap: 1rem;">
+            <button class="btn-tactical" onclick="triggerSync()">[ SYNC_NOTION ]</button>
+        </div>
+    </header>
 
-            <!-- Main Content Area -->
-            <div class="card card-large application-feed">
-                <div class="card-header">
-                    <h2>Recent Applications</h2>
-                    <a href="#applications" class="view-all">View All →</a>
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-viewport" style="grid-column: 2/3; grid-row: 2/3;">
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="spa-view active">
+            <div class="agent-deck">
+                <div class="globe-container">
+                    <svg viewBox="0 0 100 100" class="tactical-globe">
+                        <circle cx="50" cy="50" r="48" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" stroke-dasharray="1 2"/>
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--neon-cyan)" stroke-width="0.05" opacity="0.3"/>
+                        <path d="M10 50 Q 50 10 90 50 T 10 50" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" opacity="0.2"/>
+                        <path d="M50 10 Q 90 50 50 90 T 50 10" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" opacity="0.2"/>
+                        <line x1="50" y1="50" x2="50" y2="2" stroke="var(--neon-cyan)" stroke-width="0.3" class="radar-sweep"/>
+                    </svg>
                 </div>
-                <div class="job-card bento-card">
-                    <div class="job-header">
-                        <div>
-                            <h4 id="job-title-display">Job Title</h4>
-                            <p id="job-company-display" class="subtitle">Company Name</p>
-                        </div>
-                        <span id="job-match-badge" class="badge">Match: 95%</span>
-                    </div>
-                    
-                    <div class="job-meta">
-                        <span id="job-location-display">📍 Location</span>
-                        <span id="job-status-display" class="badge-status">Status: Found</span>
-                    </div>
 
-                    <div class="job-actions">
-                        <button id="tailor-btn" class="btn-secondary">✨ Tailor Resume</button>
-                        <a id="apply-btn" href="#" target="_blank" class="btn-primary">🛫 Manual Apply</a>
-                    </div>
-                    
-                    <div id="tailored-assets" class="asset-links" style="display: none;">
-                        <h5>Tailored Assets:</h5>
-                        <div class="asset-grid">
-                            <a id="download-docx" href="#" class="asset-link">📄 Resume (DOCX)</a>
-                            <a id="download-cover" href="#" class="asset-link">✉️ Cover Letter</a>
-                            <a id="view-pitch" href="#" class="asset-link">🎤 Recruiter Pitch</a>
-                        </div>
+                <div id="agent-scout" class="glass-node">
+                    <div class="node-header"><span class="tag">AG_01_SCOUT</span><div class="status-dot online"></div></div>
+                    <div class="node-body">
+                        <h3>MARKET_DISCOVERY</h3>
+                        <p>JOBS_FOUND: <span id="scout-count">0</span></p>
+                        <p>LAST_SYNC: NEVER</p>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table id="applications-table">
+
+                <div id="agent-analyst" class="glass-node">
+                    <div class="node-header"><span class="tag">AG_02_ANALYST</span><div class="status-dot processing"></div></div>
+                    <div class="node-body">
+                        <h3>STRATEGY_CALIB</h3>
+                        <p>AVG_MATCH: --%</p>
+                        <p>DNA_MAP: ACTIVE</p>
+                    </div>
+                </div>
+
+                <div id="agent-liaison" class="glass-node">
+                    <div class="node-header"><span class="tag">AG_03_LIAISON</span><div class="status-dot idle"></div></div>
+                    <div class="node-body">
+                        <h3>TARGET_OUTREACH</h3>
+                        <p>APPS_SENT: 0</p>
+                        <p>WAIT_ACK: 0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mission-featured glass-node">
+                <div class="node-header"><span class="tag">RECENT_MISSION_TARGETS</span></div>
+                <div class="node-body" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="job-featured">
+                        <h2 id="job-title-display" style="font-family: var(--mono-font); font-size: 0.9rem;">MISSION_PENDING</h2>
+                        <p id="job-company-display" style="font-size: 0.6rem; color: var(--text-secondary);">Awaiting synchronization...</p>
+                    </div>
+                    <div class="action-row" style="display: flex; gap: 0.5rem;">
+                        <button id="tailor-btn" class="btn-tactical">[ TAILOR_DNA ]</button>
+                        <a id="apply-btn" href="#" target="_blank" class="btn-tactical" style="text-decoration: none;">[ MANUAL_APPLY ]</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: APPLICATIONS -->
+        <div id="view-applications" class="spa-view">
+            <div class="glass-node" style="height: 100%;">
+                <div class="node-header"><span class="tag">CENTRAL_TARGET_DATABASE</span></div>
+                <div class="table-container" style="overflow-y: auto; height: calc(100% - 40px);">
+                    <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Job Title</th>
-                                <th>Company</th>
-                                <th>Match Score</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>TITLE</th>
+                                <th>ORG</th>
+                                <th>SCORE</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
-                        <tbody id="app-list">
-                            <!-- Populated via JS -->
-                        </tbody>
+                        <tbody id="app-list-full"></tbody>
                     </table>
-                </div>
-            </div>
-
-            <!-- Skills Analysis Card -->
-            <div class="card card-medium skills-analysis">
-                <div class="card-header">
-                    <h2>Skills Mapping</h2>
-                </div>
-                <div class="skill-cloud" id="skill-cloud">
-                    <!-- Dynamic Skills -->
-                </div>
-            </div>
-
-            <!-- Profile Overview -->
-            <div class="card card-medium profile-summary">
-                <div class="card-header">
-                    <h2>Candidate Profile</h2>
-                </div>
-                <div class="profile-details" id="profile-data">
-                    <p>No profile data. Upload a resume to get started.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Upload Modal -->
-    <div id="upload-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Analyze New Resume</h2>
-            <p>Upload your resume (PDF/DOCX) to update your profile and find new matches.</p>
-            <form id="upload-form">
-                <div class="drop-zone" id="drop-zone">
-                    <span class="drop-zone__prompt">Drop file here or click to upload</span>
-                    <input type="file" name="file" class="drop-zone__input">
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Start AI Analysis</button>
-            </form>
+    <!-- MISSION TRAY (TELEMETRY) -->
+    <div id="global-mission-tray" class="mission-tray-container">
+        <div class="tray-handle" style="font-family: var(--mono-font); font-size: 0.6rem; color: var(--text-secondary); height: 30px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--glass-border);">
+            <span>📊 MISSION_TELEMETRY_DATAFEED</span>
+        </div>
+        <div style="overflow-y: auto; flex-grow: 1;">
+            <table class="data-table">
+                <thead><tr><th>TITLE</th><th>ORG</th><th>SCORE</th><th>STATUS</th></tr></thead>
+                <tbody id="tray-list-data"></tbody>
+            </table>
         </div>
     </div>
 
