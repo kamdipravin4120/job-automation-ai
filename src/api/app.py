@@ -9,6 +9,7 @@ from src.settings import get_settings
 from src.api.routers.auth import router as auth_router
 from src.api.routers.devices import router as devices_router
 from src.api.core.deps import get_current_device
+from src.api.middleware.idempotency import IdempotencyMiddleware
 
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(IdempotencyMiddleware)
 
     @app.get("/health", include_in_schema=False)
     async def health_check():
