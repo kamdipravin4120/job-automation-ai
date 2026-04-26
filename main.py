@@ -82,6 +82,26 @@ def _cmd_bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _register_serve(subparsers: argparse._SubParsersAction) -> None:
+    p = subparsers.add_parser("serve", help="Start the FastAPI server via uvicorn.")
+    p.add_argument("--host", default="0.0.0.0")
+    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--reload", action="store_true")
+    p.set_defaults(func=_cmd_serve)
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    import uvicorn
+    uvicorn.run(
+        "src.api.app:create_app",
+        factory=True,
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Automated job application system")
     parser.add_argument(
@@ -124,6 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     _register_migrate(subparsers)
     _register_migrate_sqlite(subparsers)
     _register_bootstrap(subparsers)
+    _register_serve(subparsers)
     return parser
 
 
