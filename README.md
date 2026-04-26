@@ -4,21 +4,28 @@ Production-oriented Python workflow for scraping jobs, ranking them with OpenAI 
 
 ## Development Status
 
-**Branch:** `prod/w1-foundation` — W2 API + Auth in progress (Tasks 0–4 of 20 complete)
+**Branch:** `prod/w1-foundation` — W2 API + Auth **complete** (all 20 tasks shipped, 2026-04-26)
 
 | Phase | Status | What it builds |
 |-------|--------|----------------|
 | W1 Foundation | ✅ Complete | Async DB layer (SQLAlchemy + asyncpg), Celery pipeline (4 queues), Alembic migrations, CLI |
-| W2 API + Auth | 🔄 In progress | FastAPI backend, EdDSA JWT device-pairing auth, REST API, WebSocket bridge, idempotency middleware |
+| W2 API + Auth | ✅ Complete | FastAPI backend, EdDSA JWT device-pairing auth, REST API, WebSocket bridge, idempotency middleware |
 | W3–W6 | Planned | LinkedIn safety, Gmail classifier, push notifications, KEK rotation, rollback runbooks |
 
-**W2 task progress (2026-04-25):**
-- ✅ Task 0: Dependencies (PyJWT[crypto], qrcode)
-- ✅ Task 1: Settings — JWT/bootstrap/rate-limit fields, production validator
-- ✅ Task 2: Device ORM — new columns (pairing_ip, last_ip, last_user_agent), Session model dropped
-- ✅ Task 3: Alembic — async env.py, migration applied
-- ✅ Task 4: DevicesRepository — create/get/touch/revoke
-- ⏳ Task 5–19: JWT helpers → app factory → auth endpoints → REST routers → WebSocket
+**W2 — all tasks complete (2026-04-26):**
+
+| Tasks | What shipped |
+|-------|--------------|
+| 0–4 | Dependencies, settings, Device ORM, Alembic migration, DevicesRepository |
+| 5–9 | Package stubs, `create_app()` factory, EdDSA JWT helpers, Redis dep, challenge/pair auth service |
+| 10–12 | `get_current_device` dependency, JTI + device-wide revocation, token rotation, `DELETE /devices/{id}` |
+| 13–14 | Idempotency middleware (Redis 24h cache), job/run/application read routers |
+| 15–16 | Paginated list + detail endpoints for jobs, runs, applications |
+| 17 | `POST /api/v1/pipeline/trigger` — enqueue scrape with idempotency; rate-limit on `/challenge` (5/min, SET NX EX) |
+| 18 | `ConnectionManager`, WebSocket `/api/v1/ws`, Redis pubsub bridge (lifespan task) |
+| 19 | `GET /api/v1/status` (auth-gated), `python main.py serve` CLI subcommand |
+
+**Test suite:** 23/23 API tests pass (`tests/api/`)
 
 **Session memory:** `memory/project_status.md`
 
