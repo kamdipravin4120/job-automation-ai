@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.settings import get_settings
 from src.api.routers.auth import router as auth_router
+from src.api.core.deps import get_current_device
 
 
 @asynccontextmanager
@@ -38,5 +39,10 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+
+    # Temporary placeholder — replaced by jobs router in Task 14
+    @app.get("/api/v1/jobs")
+    async def _jobs_placeholder(device=Depends(get_current_device)):
+        return {"items": [], "total": 0, "page": 1, "per_page": 50, "has_next": False}
 
     return app

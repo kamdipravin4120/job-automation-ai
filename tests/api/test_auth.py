@@ -87,3 +87,27 @@ async def test_pair_invalid_signature_401(async_client, redis_client):
         "signature": "deadbeef" * 8,  # invalid — 32 chars, not a valid Ed25519 sig
     })
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_protected_route_rejects_no_token(async_client):
+    # GET /api/v1/jobs requires auth — 401 without token
+    r = await async_client.get("/api/v1/jobs")
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_protected_route_rejects_expired_token(async_client, test_private_pem):
+    import time
+    import jwt as pyjwt
+    import uuid
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+    private_key = load_pem_private_key(test_private_pem.encode(), password=None)
+    # Issue token that expired 1 hour ago
+    now = int(time.time()) - 7200
+    payload = {"sub": str(uuid.uuid4()), "jti": str(uuid.uuid4()), "iat": now, "exp": now + 3600}
+    token = pyjwt.encode(payload, private_key, algorithm="EdDSA")
+
+    r = await async_client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
