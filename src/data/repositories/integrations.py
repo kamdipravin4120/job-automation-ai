@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.integration import Integration
@@ -26,12 +27,23 @@ class IntegrationsRepository:
         status: str,
         last_error: str | None = None,
     ) -> Integration:
-        row = await self.get(provider)
-        if row is None:
-            row = Integration(provider=provider, status=status, last_error=last_error)
-            self.session.add(row)
-        else:
-            row.status = status
-            row.last_error = last_error
-        await self.session.flush()
-        return row
+        stmt = (
+            insert(Integration)
+            .values(
+                provider=provider,
+                status=status,
+                last_error=last_error,
+            )
+            .on_conflict_do_update(
+                index_elements=["provider"],
+                set_={
+                    "status": status,
+                    "last_error": last_error,
+                },
+            )
+            .returning(Integration)
+        )
+        result = await self.session.execute(
+            stmt, execution_options={"populate_existing": True}
+        )
+        return result.scalar_one()
