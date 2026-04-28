@@ -19,6 +19,7 @@ from src.api.routers.pipeline import router as pipeline_router
 from src.api.routers.ws import router as ws_router, pubsub_bridge
 from src.api.routers.integrations import router as integrations_router
 from src.api.routers.dlq import router as dlq_router
+from src.api.routers.config import router as config_router
 from src.api.middleware.idempotency import IdempotencyMiddleware
 from src.api.core.deps import get_current_device
 
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(ws_router,           prefix="/api/v1",              tags=["ws"])
     app.include_router(integrations_router, prefix="/api/v1/integrations", tags=["integrations"])
     app.include_router(dlq_router,          prefix="/api/v1/dlq",          tags=["dlq"])
+    app.include_router(config_router,       prefix="/api/v1/config",       tags=["config"])
 
     # SPA catch-all — MUST be last so all /api/v1/* routes match first
     @app.get("/{full_path:path}", include_in_schema=False)
