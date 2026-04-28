@@ -6,124 +6,232 @@
 <title>Orbital Command — Operator Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
+<!-- Toast container (top-right, z=99999) -->
+<div id="oc-toast-container"></div>
+
+<!-- ── LOGIN ── -->
 <div id="login-screen" class="oc-login" style="display:none">
   <div class="oc-login-card">
-    <h2>ORBITAL COMMAND</h2>
+    <div class="oc-login-logo">
+      <span class="pulse"></span>
+      <h2>ORBITAL COMMAND</h2>
+    </div>
     <p>Paste the bootstrap secret from <code>python main.py bootstrap</code> to pair this browser as an operator device.</p>
     <div class="oc-field">
       <label class="oc-label" for="bootstrap-input">BOOTSTRAP SECRET</label>
-      <input id="bootstrap-input" class="oc-input" type="password" placeholder="32-byte hex..." autocomplete="off">
+      <input id="bootstrap-input" class="oc-input" type="password" placeholder="32-byte hex…" autocomplete="off">
     </div>
-    <button id="login-btn" class="oc-btn oc-btn-primary" style="width:100%;justify-content:center">PAIR DEVICE</button>
+    <button id="login-btn" class="oc-btn oc-btn-primary" style="width:100%;justify-content:center;padding:.6rem">PAIR DEVICE</button>
     <div id="login-err" class="oc-login-err"></div>
   </div>
 </div>
 
+<!-- ── CONSOLE SHELL ── -->
 <div id="console-shell" class="oc-shell" style="display:none">
-  <nav class="oc-nav">
-    <div class="oc-brand"><span class="pulse"></span>ORBITAL CMD</div>
-    <a href="#/dashboard"    class="nav-link" data-route="dashboard"   ><span>&#11043;</span> DASHBOARD</a>
-    <a href="#/integrations" class="nav-link" data-route="integrations"><span>&#11043;</span> INTEGRATIONS</a>
-    <a href="#/runs"         class="nav-link" data-route="runs"        ><span>&#11043;</span> RUNS</a>
-    <a href="#/dlq"          class="nav-link" data-route="dlq"         ><span>&#11043;</span> DLQ</a>
-    <a href="#/config"       class="nav-link" data-route="config"      ><span>&#11043;</span> CONFIG</a>
-    <a href="#/audit"        class="nav-link" data-route="audit"       ><span>&#11043;</span> AUDIT</a>
-    <a href="#/selectors"    class="nav-link" data-route="selectors"   ><span>&#11043;</span> SELECTORS</a>
-    <div style="flex:1"></div>
-    <a href="#" id="logout-btn" class="nav-link"><span>&#9211;</span> LOGOUT</a>
-  </nav>
-  <header class="oc-topbar">
-    <h1 id="view-label">DASHBOARD</h1>
-    <button id="trigger-btn" class="oc-btn oc-btn-primary" style="font-size:.7rem">&#9654; TRIGGER PIPELINE</button>
-  </header>
-  <main class="oc-main">
 
+  <!-- SIDEBAR NAV -->
+  <nav class="oc-nav" aria-label="Console navigation">
+    <div class="oc-brand">
+      <span class="pulse"></span>
+      ORBITAL CMD
+    </div>
+    <div class="oc-nav-links">
+
+      <a href="#/dashboard" class="nav-link" data-route="dashboard" aria-label="Dashboard">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+        </svg>
+        DASHBOARD
+      </a>
+
+      <a href="#/integrations" class="nav-link" data-route="integrations" aria-label="Integrations">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+        </svg>
+        INTEGRATIONS
+      </a>
+
+      <a href="#/runs" class="nav-link" data-route="runs" aria-label="Runs">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+        </svg>
+        RUNS
+      </a>
+
+      <a href="#/dlq" class="nav-link" data-route="dlq" aria-label="Dead-letter queue">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        DLQ
+      </a>
+
+      <a href="#/config" class="nav-link" data-route="config" aria-label="Config">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+        </svg>
+        CONFIG
+      </a>
+
+      <a href="#/audit" class="nav-link" data-route="audit" aria-label="Audit log">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+          <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+        </svg>
+        AUDIT
+      </a>
+
+      <a href="#/selectors" class="nav-link" data-route="selectors" aria-label="Selectors">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+        SELECTORS
+      </a>
+
+      <div class="oc-nav-sep"></div>
+
+      <a href="#" id="logout-btn" class="nav-link" aria-label="Logout">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
+        </svg>
+        LOGOUT
+      </a>
+
+    </div>
+  </nav>
+
+  <!-- TOPBAR -->
+  <header class="oc-topbar">
+    <h1 id="view-label" class="oc-topbar-title">DASHBOARD</h1>
+    <span id="topbar-clock" class="oc-topbar-clock" aria-live="off"></span>
+    <button id="trigger-btn" class="oc-btn oc-btn-primary oc-btn-sm">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+      </svg>
+      TRIGGER PIPELINE
+    </button>
+  </header>
+
+  <!-- MAIN -->
+  <main class="oc-main" id="main-content">
+
+    <!-- DASHBOARD -->
     <div id="view-dashboard" class="oc-view">
       <div class="oc-stats" id="dash-stats"></div>
       <div class="oc-card">
-        <div class="oc-card-header"><span class="oc-card-title">RECENT RUNS</span></div>
-        <div class="oc-table-wrap"><table class="oc-table">
-          <thead><tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>FINISHED</th></tr></thead>
-          <tbody id="dash-runs"></tbody>
-        </table></div>
+        <div class="oc-card-header">
+          <span class="oc-card-title">RECENT RUNS</span>
+        </div>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>FINISHED</th></tr>
+            </thead>
+            <tbody id="dash-runs"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
+    <!-- INTEGRATIONS -->
     <div id="view-integrations" class="oc-view">
       <div id="integrations-list"></div>
     </div>
 
+    <!-- RUNS -->
     <div id="view-runs" class="oc-view">
       <div class="oc-card">
         <div class="oc-card-header">
-          <span class="oc-card-title">RUNS</span>
-          <select id="runs-status-filter" class="oc-input" style="width:120px;padding:.3rem .5rem">
-            <option value="">ALL</option>
+          <span class="oc-card-title">PIPELINE RUNS</span>
+          <select id="runs-status-filter" class="oc-input" style="width:148px;padding:.3rem .6rem" aria-label="Filter by status">
+            <option value="">ALL STATUS</option>
             <option value="queued">QUEUED</option>
             <option value="running">RUNNING</option>
             <option value="succeeded">SUCCEEDED</option>
             <option value="failed">FAILED</option>
           </select>
         </div>
-        <div class="oc-table-wrap"><table class="oc-table">
-          <thead><tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>RETRIES</th></tr></thead>
-          <tbody id="runs-list"></tbody>
-        </table></div>
-        <div id="runs-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>RETRIES</th></tr>
+            </thead>
+            <tbody id="runs-list"></tbody>
+          </table>
+        </div>
+        <div id="runs-pagination" class="oc-pagination"></div>
       </div>
     </div>
 
+    <!-- DLQ -->
     <div id="view-dlq" class="oc-view">
       <div class="oc-card">
-        <div class="oc-card-header"><span class="oc-card-title">DEAD-LETTER QUEUE</span></div>
-        <div class="oc-table-wrap"><table class="oc-table">
-          <thead><tr><th>KIND</th><th>CORRELATION</th><th>ERROR</th><th>RETRIES</th><th>ACTIONS</th></tr></thead>
-          <tbody id="dlq-list"></tbody>
-        </table></div>
-        <div id="dlq-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+        <div class="oc-card-header">
+          <span class="oc-card-title">DEAD-LETTER QUEUE</span>
+        </div>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr><th>KIND</th><th>CORRELATION</th><th>ERROR</th><th>RETRIES</th><th>ACTIONS</th></tr>
+            </thead>
+            <tbody id="dlq-list"></tbody>
+          </table>
+        </div>
+        <div id="dlq-pagination" class="oc-pagination"></div>
       </div>
     </div>
 
+    <!-- CONFIG -->
     <div id="view-config" class="oc-view">
       <div class="oc-card">
-        <div class="oc-card-header"><span class="oc-card-title">CONFIG.YAML</span></div>
+        <div class="oc-card-header">
+          <span class="oc-card-title">CONFIG.YAML</span>
+        </div>
         <div class="oc-field">
-          <textarea id="config-editor" class="oc-input oc-textarea" spellcheck="false"></textarea>
+          <label class="oc-label" for="config-editor">CONFIGURATION</label>
+          <textarea id="config-editor" class="oc-input oc-textarea" spellcheck="false" autocomplete="off"></textarea>
         </div>
         <div id="config-diff" class="oc-diff" style="display:none"></div>
-        <div style="display:flex;gap:.5rem;margin-top:.5rem">
-          <button id="config-save-btn" class="oc-btn oc-btn-primary">SAVE</button>
+        <div style="display:flex;gap:.625rem;margin-top:.75rem;align-items:center">
+          <button id="config-save-btn" class="oc-btn oc-btn-primary">SAVE CONFIG</button>
+          <span id="config-msg" style="font-family:'JetBrains Mono',monospace;font-size:.7rem"></span>
         </div>
-        <div id="config-msg" style="margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.75rem"></div>
       </div>
     </div>
 
+    <!-- AUDIT -->
     <div id="view-audit" class="oc-view">
       <div class="oc-card">
         <div class="oc-card-header">
           <span class="oc-card-title">AUDIT LOG</span>
-          <div style="display:flex;gap:.5rem">
-            <input id="audit-actor-filter"  class="oc-input" style="width:140px;padding:.3rem .5rem" placeholder="actor...">
-            <input id="audit-action-filter" class="oc-input" style="width:160px;padding:.3rem .5rem" placeholder="action...">
-            <button id="audit-filter-btn" class="oc-btn oc-btn-ghost">FILTER</button>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <input id="audit-actor-filter"  class="oc-input" style="width:128px;padding:.3rem .6rem" placeholder="actor…" aria-label="Filter by actor">
+            <input id="audit-action-filter" class="oc-input" style="width:148px;padding:.3rem .6rem" placeholder="action…" aria-label="Filter by action">
+            <button id="audit-filter-btn" class="oc-btn oc-btn-ghost oc-btn-sm">FILTER</button>
           </div>
         </div>
-        <div class="oc-table-wrap"><table class="oc-table">
-          <thead><tr><th>TIME</th><th>ACTOR</th><th>ACTION</th><th>TARGET</th></tr></thead>
-          <tbody id="audit-list"></tbody>
-        </table></div>
-        <div id="audit-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr><th>TIME</th><th>ACTOR</th><th>ACTION</th><th>TARGET</th></tr>
+            </thead>
+            <tbody id="audit-list"></tbody>
+          </table>
+        </div>
+        <div id="audit-pagination" class="oc-pagination"></div>
       </div>
     </div>
 
+    <!-- SELECTORS -->
     <div id="view-selectors" class="oc-view">
       <div class="oc-card">
-        <div class="oc-card-header"><span class="oc-card-title">PENDING SELECTOR PROPOSALS</span></div>
+        <div class="oc-card-header">
+          <span class="oc-card-title">PENDING SELECTOR PROPOSALS</span>
+        </div>
         <div id="selectors-list"></div>
       </div>
     </div>

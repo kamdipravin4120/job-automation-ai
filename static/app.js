@@ -2,21 +2,68 @@
 
 const ROUTES = ['dashboard','integrations','runs','dlq','config','audit','selectors'];
 const VIEW_LABELS = {
-  dashboard:'DASHBOARD', integrations:'INTEGRATIONS', runs:'RUNS',
-  dlq:'DEAD-LETTER QUEUE', config:'CONFIG.YAML', audit:'AUDIT LOG',
-  selectors:'SELECTOR PROPOSALS',
+  dashboard:    'DASHBOARD',
+  integrations: 'INTEGRATIONS',
+  runs:         'RUNS',
+  dlq:          'DEAD-LETTER QUEUE',
+  config:       'CONFIG.YAML',
+  audit:        'AUDIT LOG',
+  selectors:    'SELECTOR PROPOSALS',
 };
 
-// ── HTML escaping (XSS prevention) ───────────────────────────────────────────
+// ── XSS prevention ────────────────────────────────────────────────────────────
 
 function _esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Toast notifications ───────────────────────────────────────────────────────
+
+function _toast(msg, type, duration) {
+  type = type || 'info';
+  duration = duration == null ? 3500 : duration;
+  var container = document.getElementById('oc-toast-container');
+  if (!container) return;
+
+  var toast = document.createElement('div');
+  toast.className = 'oc-toast ' + type;
+  toast.innerHTML =
+    '<span class="oc-toast-dot"></span>' +
+    '<span>' + _esc(String(msg)) + '</span>';
+
+  container.appendChild(toast);
+
+  var remove = function() {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(12px)';
+    toast.style.transition = 'opacity .15s, transform .15s';
+    setTimeout(function() { toast.remove(); }, 160);
+  };
+
+  if (duration > 0) setTimeout(remove, duration);
+  toast.addEventListener('click', remove);
+}
+
+// ── Skeleton rows ─────────────────────────────────────────────────────────────
+
+function _skeletonRows(count, cols) {
+  var widths = [60, 90, 45, 70, 55, 80];
+  var rows = '';
+  for (var i = 0; i < count; i++) {
+    var cells = '';
+    for (var j = 0; j < cols; j++) {
+      var w = widths[(i + j) % widths.length];
+      cells += '<td><span class="oc-skel oc-skel-anim" style="width:' + w + '%"></span></td>';
+    }
+    rows += '<tr>' + cells + '</tr>';
+  }
+  return rows;
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 
 function currentRoute() {
-  const h = window.location.hash.replace('#/','').split('?')[0];
+  var h = window.location.hash.replace('#/','').split('?')[0];
   return ROUTES.includes(h) ? h : 'dashboard';
 }
 
@@ -26,26 +73,26 @@ function navigate(route) {
 }
 
 function _activateView(route) {
-  document.querySelectorAll('.oc-view').forEach(v => v.classList.remove('active'));
-  const el = document.getElementById('view-' + route);
+  document.querySelectorAll('.oc-view').forEach(function(v) { v.classList.remove('active'); });
+  var el = document.getElementById('view-' + route);
   if (el) el.classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(a =>
-    a.classList.toggle('active', a.dataset.route === route)
-  );
-  const lbl = document.getElementById('view-label');
+  document.querySelectorAll('.nav-link').forEach(function(a) {
+    a.classList.toggle('active', a.dataset.route === route);
+  });
+  var lbl = document.getElementById('view-label');
   if (lbl) lbl.textContent = VIEW_LABELS[route] || route.toUpperCase();
 }
 
 async function _loadRoute(route) {
   _activateView(route);
   try {
-    const loaders = {
+    var loaders = {
       dashboard:    loadDashboard,
       integrations: loadIntegrations,
-      runs:         () => loadRuns(1),
-      dlq:          () => loadDlq(1),
+      runs:         function() { return loadRuns(1); },
+      dlq:          function() { return loadDlq(1); },
       config:       loadConfig,
-      audit:        () => loadAudit(1),
+      audit:        function() { return loadAudit(1); },
       selectors:    loadSelectors,
     };
     if (loaders[route]) await loaders[route]();
@@ -54,18 +101,32 @@ async function _loadRoute(route) {
   }
 }
 
-window.addEventListener('hashchange', () => _loadRoute(currentRoute()));
+window.addEventListener('hashchange', function() { _loadRoute(currentRoute()); });
+
+// ── Clock ─────────────────────────────────────────────────────────────────────
+
+function _startClock() {
+  var el = document.getElementById('topbar-clock');
+  if (!el) return;
+  var tick = function() {
+    var now = new Date();
+    el.textContent = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  };
+  tick();
+  setInterval(tick, 1000);
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function _statusPill(status) {
-  const cls = {
-    succeeded:'ok', connected:'ok', approved:'ok',
-    failed:'error', error:'error', rejected:'error',
-    running:'warn', pending:'pending',
-    queued:'queued', dismissed:'queued',
+  var cls = {
+    succeeded: 'ok',  connected: 'ok',  approved: 'ok',
+    failed:    'error', error: 'error',  rejected: 'error',
+    running:   'warn',
+    pending:   'pending',
+    queued:    'queued', dismissed: 'queued',
   }[status] || 'queued';
-  return '<span class="oc-pill ' + cls + '">' + status.toUpperCase() + '</span>';
+  return '<span class="oc-pill ' + cls + '">' + _esc(status.toUpperCase()) + '</span>';
 }
 
 function _ts(iso) {
@@ -74,81 +135,97 @@ function _ts(iso) {
 }
 
 function _paginationButtons(page, hasNext, fnName) {
-  const prev = page > 1 ? '<button class="oc-btn oc-btn-ghost" onclick="' + fnName + '(' + (page-1) + ')">&#8592; PREV</button>' : '';
-  const next = hasNext   ? '<button class="oc-btn oc-btn-ghost" onclick="' + fnName + '(' + (page+1) + ')">NEXT &#8594;</button>' : '';
-  const mid  = (prev||next) ? '<span style="color:#94a3b8;font-family:\'JetBrains Mono\',monospace;font-size:.75rem;padding:.35rem .5rem">PAGE ' + page + '</span>' : '';
+  var prev = page > 1
+    ? '<button class="oc-btn oc-btn-ghost oc-btn-sm" onclick="' + fnName + '(' + (page-1) + ')">&#8592; PREV</button>'
+    : '';
+  var next = hasNext
+    ? '<button class="oc-btn oc-btn-ghost oc-btn-sm" onclick="' + fnName + '(' + (page+1) + ')">NEXT &#8594;</button>'
+    : '';
+  var mid = (prev || next)
+    ? '<span class="oc-page-num">PAGE ' + page + '</span>'
+    : '';
   return prev + mid + next;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 async function loadDashboard() {
-  const [rr, dr] = await Promise.all([
-    authFetch('/api/v1/runs?per_page=10'),
-    authFetch('/api/v1/dlq?per_page=1'),
-  ]);
-  const runs = await rr.json();
-  const dlq  = await dr.json();
+  var runsBody = document.getElementById('dash-runs');
+  var statsEl  = document.getElementById('dash-stats');
+  if (runsBody) runsBody.innerHTML = _skeletonRows(5, 5);
 
-  document.getElementById('dash-stats').innerHTML = [
+  var rr = await authFetch('/api/v1/runs?per_page=10');
+  var dr = await authFetch('/api/v1/dlq?per_page=1');
+  var runs = await rr.json();
+  var dlq  = await dr.json();
+
+  statsEl.innerHTML = [
     {label:'TOTAL RUNS',    value: runs.total},
-    {label:'DLQ ITEMS',     value: dlq.total,   warn: dlq.total > 0},
-    {label:'LATEST STATUS', value: (runs.items[0]?.status || '—').toUpperCase()},
-  ].map(s =>
-    '<div class="oc-stat"><div class="label">' + s.label + '</div>' +
-    '<div class="value"' + (s.warn ? ' style="color:#ff4365"' : '') + '>' + _esc(String(s.value)) + '</div></div>'
-  ).join('');
+    {label:'DLQ ITEMS',     value: dlq.total,  cls: dlq.total > 0 ? 'danger' : ''},
+    {label:'LATEST STATUS', value: (runs.items[0]?.status || '—').toUpperCase(), cls: ''},
+  ].map(function(s) {
+    return '<div class="oc-stat">' +
+      '<div class="label">' + s.label + '</div>' +
+      '<div class="value' + (s.cls ? ' ' + s.cls : '') + '">' + _esc(String(s.value)) + '</div>' +
+      '</div>';
+  }).join('');
 
-  document.getElementById('dash-runs').innerHTML = runs.items.length
-    ? runs.items.map(r =>
-        '<tr>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem;color:#38bdf8">' + _esc(r.kind) + '</td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.7rem;color:#94a3b8">' + _esc(r.correlation_id.slice(0,20)) + '&#8230;</td>' +
-        '<td>' + _statusPill(r.status) + '</td>' +
-        '<td style="font-size:.75rem">' + _esc(_ts(r.started_at)) + '</td>' +
-        '<td style="font-size:.75rem">' + _esc(_ts(r.finished_at)) + '</td>' +
-        '</tr>'
-      ).join('')
+  runsBody.innerHTML = runs.items.length
+    ? runs.items.map(function(r) {
+        return '<tr>' +
+          '<td style="font-family:var(--mono);font-size:.73rem;color:var(--accent)">' + _esc(r.kind) + '</td>' +
+          '<td style="font-family:var(--mono);font-size:.7rem;color:var(--t-mid)">' + _esc(r.correlation_id.slice(0,22)) + '&#8230;</td>' +
+          '<td>' + _statusPill(r.status) + '</td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid);white-space:nowrap">' + _esc(_ts(r.started_at)) + '</td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid);white-space:nowrap">' + _esc(_ts(r.finished_at)) + '</td>' +
+          '</tr>';
+      }).join('')
     : '<tr><td colspan="5" class="oc-empty">No runs yet.</td></tr>';
 }
 
 // ── Integrations ──────────────────────────────────────────────────────────────
 
 async function loadIntegrations() {
-  const r = await authFetch('/api/v1/integrations');
-  const items = await r.json();
-  const byProvider = Object.fromEntries(items.map(i => [i.provider, i]));
+  var container = document.getElementById('integrations-list');
+  container.innerHTML = '<div class="oc-spinner-wrap"><div class="oc-spinner"></div></div>';
 
-  const KNOWN = [
+  var r     = await authFetch('/api/v1/integrations');
+  var items = await r.json();
+  var byProvider = Object.fromEntries(items.map(function(i) { return [i.provider, i]; }));
+
+  var KNOWN = [
     {provider:'gmail',     label:'Gmail'},
     {provider:'linkedin',  label:'LinkedIn'},
     {provider:'openai',    label:'OpenAI'},
     {provider:'anthropic', label:'Anthropic'},
   ];
 
-  document.getElementById('integrations-list').innerHTML = KNOWN.map(k => {
-    const row    = byProvider[k.provider];
-    const status = row?.status || 'disconnected';
-    const errHtml = row?.last_error
-      ? '<div style="color:#ff4365;font-size:.75rem;margin-top:.4rem;font-family:\'JetBrains Mono\',monospace">' + _esc(row.last_error) + '</div>'
+  container.innerHTML = KNOWN.map(function(k) {
+    var row    = byProvider[k.provider];
+    var status = row?.status || 'disconnected';
+    var errHtml = row?.last_error
+      ? '<div style="color:var(--err);font-size:.72rem;margin-top:.4rem;font-family:var(--mono)">' + _esc(row.last_error) + '</div>'
       : '';
-    const isKey = ['openai','anthropic'].includes(k.provider);
-    const action = isKey
-      ? '<input class="oc-input" id="apikey-' + k.provider + '" type="password" placeholder="sk-..." style="width:200px">' +
-        '<button class="oc-btn oc-btn-ghost" style="margin-left:.5rem" onclick="saveApiKey(\'' + k.provider + '\')">SAVE</button>'
-      : '<button class="oc-btn oc-btn-ghost" disabled>' + (status === 'connected' ? 'RECONNECT' : 'CONNECT') + '</button>';
+    var isKey = k.provider === 'openai' || k.provider === 'anthropic';
+    var action = isKey
+      ? '<input class="oc-input" id="apikey-' + k.provider + '" type="password" placeholder="sk-…" style="width:200px">' +
+        '<button class="oc-btn oc-btn-ghost oc-btn-sm" style="margin-left:.5rem" onclick="saveApiKey(\'' + k.provider + '\')">SAVE</button>'
+      : '<button class="oc-btn oc-btn-ghost oc-btn-sm" disabled>' + (status === 'connected' ? 'RECONNECT' : 'CONNECT') + '</button>';
     return '<div class="oc-card">' +
-      '<div class="oc-card-header"><span class="oc-card-title">' + _esc(k.label.toUpperCase()) + '</span>' + _statusPill(status) + '</div>' +
+      '<div class="oc-card-header">' +
+        '<span class="oc-card-title">' + _esc(k.label.toUpperCase()) + '</span>' +
+        _statusPill(status) +
+      '</div>' +
       errHtml +
-      '<div style="margin-top:.75rem">' + action + '</div>' +
+      '<div style="margin-top:.75rem;display:flex;align-items:center">' + action + '</div>' +
       '</div>';
   }).join('');
 }
 
 window.saveApiKey = function(provider) {
-  const input = document.getElementById('apikey-' + provider);
+  var input = document.getElementById('apikey-' + provider);
   if (!input || !input.value) return;
-  alert('Key noted for ' + provider + '. Persistence to DB not yet wired (W4).');
+  _toast('Key noted for ' + provider + '. Persistence not yet wired (W4).', 'info');
   input.value = '';
 };
 
@@ -156,22 +233,25 @@ window.saveApiKey = function(provider) {
 
 window.loadRuns = async function(page) {
   page = page || 1;
-  const status = document.getElementById('runs-status-filter')?.value || '';
-  const qs = new URLSearchParams({page: page, per_page: 25});
-  if (status) qs.set('status', status);
-  const r = await authFetch('/api/v1/runs?' + qs);
-  const data = await r.json();
+  var tbody = document.getElementById('runs-list');
+  if (tbody) tbody.innerHTML = _skeletonRows(6, 5);
 
-  document.getElementById('runs-list').innerHTML = data.items.length
-    ? data.items.map(r =>
-        '<tr>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem;color:#38bdf8">' + _esc(r.kind) + '</td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.7rem;color:#94a3b8">' + _esc(r.correlation_id.slice(0,24)) + '&#8230;</td>' +
-        '<td>' + _statusPill(r.status) + '</td>' +
-        '<td style="font-size:.75rem">' + _esc(_ts(r.started_at)) + '</td>' +
-        '<td style="font-size:.75rem;text-align:right;color:#94a3b8">' + _esc(String(r.retry_count)) + '</td>' +
-        '</tr>'
-      ).join('')
+  var status = document.getElementById('runs-status-filter')?.value || '';
+  var qs = new URLSearchParams({page: page, per_page: 25});
+  if (status) qs.set('status', status);
+  var r    = await authFetch('/api/v1/runs?' + qs);
+  var data = await r.json();
+
+  tbody.innerHTML = data.items.length
+    ? data.items.map(function(r) {
+        return '<tr>' +
+          '<td style="font-family:var(--mono);font-size:.73rem;color:var(--accent)">' + _esc(r.kind) + '</td>' +
+          '<td style="font-family:var(--mono);font-size:.7rem;color:var(--t-mid)">' + _esc(r.correlation_id.slice(0,24)) + '&#8230;</td>' +
+          '<td>' + _statusPill(r.status) + '</td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid);white-space:nowrap">' + _esc(_ts(r.started_at)) + '</td>' +
+          '<td style="font-size:.75rem;text-align:right;color:var(--t-mid)">' + _esc(String(r.retry_count)) + '</td>' +
+          '</tr>';
+      }).join('')
     : '<tr><td colspan="5" class="oc-empty">No runs.</td></tr>';
 
   document.getElementById('runs-pagination').innerHTML =
@@ -182,22 +262,25 @@ window.loadRuns = async function(page) {
 
 window.loadDlq = async function(page) {
   page = page || 1;
-  const r = await authFetch('/api/v1/dlq?page=' + page + '&per_page=25');
-  const data = await r.json();
+  var tbody = document.getElementById('dlq-list');
+  if (tbody) tbody.innerHTML = _skeletonRows(5, 5);
 
-  document.getElementById('dlq-list').innerHTML = data.items.length
-    ? data.items.map(item =>
-        '<tr>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem;color:#38bdf8">' + _esc(item.kind) + '</td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.7rem;color:#94a3b8">' + _esc(item.correlation_id.slice(0,20)) + '&#8230;</td>' +
-        '<td style="font-size:.75rem;color:#ff4365">' + _esc(item.error_code || '—') + '</td>' +
-        '<td style="font-size:.75rem;text-align:right;color:#94a3b8">' + _esc(String(item.retry_count)) + '</td>' +
-        '<td>' +
-        '<button class="oc-btn oc-btn-primary" style="font-size:.65rem;margin-right:.25rem" onclick="retryDlq(\'' + _esc(item.id) + '\')">RETRY</button>' +
-        '<button class="oc-btn oc-btn-danger"  style="font-size:.65rem" onclick="dismissDlq(\'' + _esc(item.id) + '\')">DISMISS</button>' +
-        '</td>' +
-        '</tr>'
-      ).join('')
+  var r    = await authFetch('/api/v1/dlq?page=' + page + '&per_page=25');
+  var data = await r.json();
+
+  tbody.innerHTML = data.items.length
+    ? data.items.map(function(item) {
+        return '<tr>' +
+          '<td style="font-family:var(--mono);font-size:.73rem;color:var(--accent)">' + _esc(item.kind) + '</td>' +
+          '<td style="font-family:var(--mono);font-size:.7rem;color:var(--t-mid)">' + _esc(item.correlation_id.slice(0,22)) + '&#8230;</td>' +
+          '<td style="font-size:.75rem;color:var(--err)">' + _esc(item.error_code || '—') + '</td>' +
+          '<td style="font-size:.75rem;text-align:right;color:var(--t-mid)">' + _esc(String(item.retry_count)) + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="oc-btn oc-btn-primary oc-btn-sm" style="margin-right:.3rem" onclick="retryDlq(\'' + _esc(item.id) + '\')">RETRY</button>' +
+            '<button class="oc-btn oc-btn-danger  oc-btn-sm" onclick="dismissDlq(\'' + _esc(item.id) + '\')">DISMISS</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('')
     : '<tr><td colspan="5" class="oc-empty">DLQ is empty.</td></tr>';
 
   document.getElementById('dlq-pagination').innerHTML =
@@ -205,36 +288,39 @@ window.loadDlq = async function(page) {
 };
 
 window.retryDlq = async function(id) {
-  const r = await authFetch('/api/v1/dlq/' + id + '/retry', {method:'POST'});
-  if (r.ok) loadDlq(1); else alert('Retry failed: ' + r.status);
+  var r = await authFetch('/api/v1/dlq/' + id + '/retry', {method:'POST'});
+  if (r.ok) { _toast('Queued for retry', 'ok'); loadDlq(1); }
+  else _toast('Retry failed (HTTP ' + r.status + ')', 'error');
 };
 
 window.dismissDlq = async function(id) {
-  const r = await authFetch('/api/v1/dlq/' + id + '/dismiss', {method:'POST'});
-  if (r.ok) loadDlq(1); else alert('Dismiss failed: ' + r.status);
+  var r = await authFetch('/api/v1/dlq/' + id + '/dismiss', {method:'POST'});
+  if (r.ok) { _toast('Item dismissed', 'ok'); loadDlq(1); }
+  else _toast('Dismiss failed (HTTP ' + r.status + ')', 'error');
 };
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-let _origConfig = '';
+var _origConfig = '';
 
 async function loadConfig() {
-  const r    = await authFetch('/api/v1/config');
-  const data = await r.json();
+  var editor = document.getElementById('config-editor');
+  if (editor) editor.value = '';
+  var r    = await authFetch('/api/v1/config');
+  var data = await r.json();
   _origConfig = data.yaml_text;
-  const editor = document.getElementById('config-editor');
   if (editor) editor.value = data.yaml_text;
-  const diff = document.getElementById('config-diff');
+  var diff = document.getElementById('config-diff');
   if (diff) diff.style.display = 'none';
-  const msg = document.getElementById('config-msg');
+  var msg = document.getElementById('config-msg');
   if (msg) msg.textContent = '';
 }
 
 function _diffHtml(oldT, newT) {
-  const o = oldT.split('\n');
-  const n = newT.split('\n');
-  const out = [];
-  for (let i = 0; i < Math.max(o.length, n.length); i++) {
+  var o = oldT.split('\n');
+  var n = newT.split('\n');
+  var out = [];
+  for (var i = 0; i < Math.max(o.length, n.length); i++) {
     if (i >= o.length)      out.push('<span class="add">+ ' + _esc(n[i]) + '</span>');
     else if (i >= n.length) out.push('<span class="del">- ' + _esc(o[i]) + '</span>');
     else if (o[i] !== n[i]) {
@@ -267,27 +353,32 @@ document.addEventListener('DOMContentLoaded', function() {
       var yaml_text = document.getElementById('config-editor')?.value;
       var msg = document.getElementById('config-msg');
       saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="oc-spin"></span> SAVING…';
       try {
         var r = await authFetch('/api/v1/config', {
           method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
+          headers: {'Content-Type':'application/json'},
           body: JSON.stringify({yaml_text: yaml_text}),
         });
         var data = await r.json();
         if (r.ok) {
-          msg.style.color = '#5eead4';
-          msg.textContent = 'Saved. Config reload event published.';
+          msg.style.color = 'var(--ok)';
+          msg.textContent = 'Saved. Reload event published.';
           _origConfig = data.yaml_text;
           document.getElementById('config-diff').style.display = 'none';
+          _toast('Config saved and reload event published', 'ok');
         } else {
-          msg.style.color = '#ff4365';
+          msg.style.color = 'var(--err)';
           msg.textContent = data.detail || 'Save failed';
+          _toast(data.detail || 'Config save failed', 'error');
         }
       } catch (e) {
-        msg.style.color = '#ff4365';
+        msg.style.color = 'var(--err)';
         msg.textContent = String(e);
+        _toast('Config save error: ' + e.message, 'error');
       } finally {
         saveBtn.disabled = false;
+        saveBtn.innerHTML = 'SAVE CONFIG';
       }
     });
   }
@@ -297,6 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.loadAudit = async function(page) {
   page = page || 1;
+  var tbody = document.getElementById('audit-list');
+  if (tbody) tbody.innerHTML = _skeletonRows(6, 4);
+
   var actor  = document.getElementById('audit-actor-filter')?.value  || '';
   var action = document.getElementById('audit-action-filter')?.value || '';
   var qs = new URLSearchParams({page: page, per_page: 50});
@@ -305,15 +399,15 @@ window.loadAudit = async function(page) {
   var r    = await authFetch('/api/v1/audit?' + qs);
   var data = await r.json();
 
-  document.getElementById('audit-list').innerHTML = data.items.length
-    ? data.items.map(e =>
-        '<tr>' +
-        '<td style="font-size:.75rem;white-space:nowrap;color:#94a3b8">' + _esc(_ts(e.at)) + '</td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem;color:#38bdf8">' + _esc(e.actor) + '</td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:.75rem">' + _esc(e.action) + '</td>' +
-        '<td style="font-size:.75rem;color:#94a3b8">' + _esc(e.target) + '</td>' +
-        '</tr>'
-      ).join('')
+  tbody.innerHTML = data.items.length
+    ? data.items.map(function(e) {
+        return '<tr>' +
+          '<td style="font-size:.72rem;white-space:nowrap;color:var(--t-mid)">' + _esc(_ts(e.at)) + '</td>' +
+          '<td style="font-family:var(--mono);font-size:.73rem;color:var(--accent)">' + _esc(e.actor) + '</td>' +
+          '<td style="font-family:var(--mono);font-size:.73rem">' + _esc(e.action) + '</td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid)">' + _esc(e.target) + '</td>' +
+          '</tr>';
+      }).join('')
     : '<tr><td colspan="4" class="oc-empty">No audit entries.</td></tr>';
 
   document.getElementById('audit-pagination').innerHTML =
@@ -328,39 +422,45 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── Selectors ─────────────────────────────────────────────────────────────────
 
 async function loadSelectors() {
+  var container = document.getElementById('selectors-list');
+  container.innerHTML = '<div class="oc-spinner-wrap"><div class="oc-spinner"></div></div>';
+
   var r     = await authFetch('/api/v1/selectors');
   var items = await r.json();
-  var container = document.getElementById('selectors-list');
 
   if (!items.length) {
     container.innerHTML = '<div class="oc-empty">No pending selector proposals.</div>';
     return;
   }
 
-  container.innerHTML = items.map(s =>
-    '<div class="oc-card" id="sel-' + _esc(s.id) + '">' +
-    '<div class="oc-card-header">' +
-    '<span class="oc-card-title">' + _esc(s.source.toUpperCase()) + ' &mdash; ' + _esc(s.key_path) + '</span>' +
-    _statusPill(s.status) +
-    '</div>' +
-    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:.8rem;color:#5eead4;margin-bottom:.5rem">NEW: ' + _esc(s.selector) + '</div>' +
-    '<div style="font-size:.75rem;color:#94a3b8;margin-bottom:.75rem">Proposed by <strong>' + _esc(s.proposed_by) + '</strong> at ' + _esc(_ts(s.proposed_at)) + '</div>' +
-    '<div style="display:flex;gap:.5rem">' +
-    '<button class="oc-btn oc-btn-primary" onclick="approveSelector(\'' + _esc(s.id) + '\')">APPROVE</button>' +
-    '<button class="oc-btn oc-btn-danger"  onclick="rejectSelector(\'' + _esc(s.id) + '\')">REJECT</button>' +
-    '</div>' +
-    '</div>'
-  ).join('');
+  container.innerHTML = items.map(function(s) {
+    return '<div class="oc-card" id="sel-' + _esc(s.id) + '">' +
+      '<div class="oc-card-header">' +
+        '<span class="oc-card-title">' + _esc(s.source.toUpperCase()) + ' &mdash; ' + _esc(s.key_path) + '</span>' +
+        _statusPill(s.status) +
+      '</div>' +
+      '<div style="font-family:var(--mono);font-size:.78rem;color:var(--ok);margin-bottom:.5rem">NEW: ' + _esc(s.selector) + '</div>' +
+      '<div style="font-size:.73rem;color:var(--t-mid);margin-bottom:.875rem">' +
+        'Proposed by <strong style="color:var(--t-hi)">' + _esc(s.proposed_by) + '</strong> at ' + _esc(_ts(s.proposed_at)) +
+      '</div>' +
+      '<div style="display:flex;gap:.5rem">' +
+        '<button class="oc-btn oc-btn-primary oc-btn-sm" onclick="approveSelector(\'' + _esc(s.id) + '\')">APPROVE</button>' +
+        '<button class="oc-btn oc-btn-danger  oc-btn-sm" onclick="rejectSelector(\'' + _esc(s.id) + '\')">REJECT</button>' +
+      '</div>' +
+      '</div>';
+  }).join('');
 }
 
 window.approveSelector = async function(id) {
   var r = await authFetch('/api/v1/selectors/' + id + '/approve', {method:'POST'});
-  if (r.ok) loadSelectors(); else alert('Approve failed: ' + r.status);
+  if (r.ok) { _toast('Selector approved', 'ok'); loadSelectors(); }
+  else _toast('Approve failed (HTTP ' + r.status + ')', 'error');
 };
 
 window.rejectSelector = async function(id) {
   var r = await authFetch('/api/v1/selectors/' + id + '/reject', {method:'POST'});
-  if (r.ok) loadSelectors(); else alert('Reject failed: ' + r.status);
+  if (r.ok) { _toast('Selector rejected', 'ok'); loadSelectors(); }
+  else _toast('Reject failed (HTTP ' + r.status + ')', 'error');
 };
 
 // ── Pipeline trigger ──────────────────────────────────────────────────────────
@@ -370,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!btn) return;
   btn.addEventListener('click', async function() {
     btn.disabled = true;
-    btn.textContent = 'QUEUING…';
+    btn.innerHTML = '<span class="oc-spin"></span> QUEUING…';
     try {
       var key = 'web-' + Date.now();
       var r   = await authFetch('/api/v1/pipeline/trigger', {
@@ -379,17 +479,25 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({}),
       });
       var data = await r.json();
-      btn.textContent = '✓ QUEUED (' + _esc(data.correlation_id.slice(0,8)) + '…)';
+      btn.innerHTML = '&#10003; ' + _esc(data.correlation_id.slice(0,8)) + '…';
+      _toast('Pipeline queued (' + data.correlation_id.slice(0,8) + '…)', 'ok');
       setTimeout(function() {
-        btn.textContent = '▶ TRIGGER PIPELINE';
+        btn.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:12px;height:12px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg> TRIGGER PIPELINE';
         btn.disabled = false;
       }, 4000);
     } catch (e) {
-      btn.textContent = '▶ TRIGGER PIPELINE';
+      btn.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:12px;height:12px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg> TRIGGER PIPELINE';
       btn.disabled = false;
-      alert('Trigger failed: ' + e.message);
+      _toast('Trigger failed: ' + (e.message || e), 'error');
     }
   });
+});
+
+// ── Runs filter ───────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function() {
+  var f = document.getElementById('runs-status-filter');
+  if (f) f.addEventListener('change', function() { loadRuns(1); });
 });
 
 // ── Auth UI + boot ────────────────────────────────────────────────────────────
@@ -405,6 +513,8 @@ function _showConsole() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  _startClock();
+
   var logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function(e) {
@@ -419,13 +529,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loginBtn.addEventListener('click', async function() {
       var secret = document.getElementById('bootstrap-input')?.value?.trim();
       var errEl  = document.getElementById('login-err');
+      errEl.style.display = 'none';
       if (!secret) {
         errEl.style.display = 'block';
         errEl.textContent = 'Enter the bootstrap secret.';
         return;
       }
       loginBtn.disabled = true;
-      loginBtn.textContent = 'PAIRING…';
+      loginBtn.innerHTML = '<span class="oc-spin"></span> PAIRING…';
       try {
         await pairDevice(secret);
         _showConsole();
@@ -434,8 +545,16 @@ document.addEventListener('DOMContentLoaded', function() {
         errEl.style.display = 'block';
         errEl.textContent = e.message || 'Pairing failed.';
         loginBtn.disabled = false;
-        loginBtn.textContent = 'PAIR DEVICE';
+        loginBtn.innerHTML = 'PAIR DEVICE';
       }
+    });
+  }
+
+  /* Bootstrap input: pair on Enter */
+  var inp = document.getElementById('bootstrap-input');
+  if (inp) {
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('login-btn')?.click();
     });
   }
 
@@ -445,10 +564,4 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     _showLogin();
   }
-});
-
-// Runs filter
-document.addEventListener('DOMContentLoaded', function() {
-  var f = document.getElementById('runs-status-filter');
-  if (f) f.addEventListener('change', function() { loadRuns(1); });
 });
