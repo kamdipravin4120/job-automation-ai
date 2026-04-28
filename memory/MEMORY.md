@@ -1,3 +1,3 @@
 # Memory Index
 
-- [Project status](project_status.md) — branch, completed W2 tasks (0–4), next task (5: JWT helpers), key decisions; refreshed 2026-04-25
+- [Project status](project_status.md) — W3 in progress: SPA UI done, repos done, auth bugs fixed (DER hex + PEM normalize), next: integrations router; refreshed 2026-04-29

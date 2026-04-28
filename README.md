@@ -4,13 +4,14 @@ Production-oriented Python workflow for scraping jobs, ranking them with OpenAI 
 
 ## Development Status
 
-**Branch:** `prod/w1-foundation` — W2 API + Auth **complete** (all 20 tasks shipped, 2026-04-26)
+**Branch:** `prod/w3-console` — W3 Operator Console **in progress** (2026-04-28)
 
 | Phase | Status | What it builds |
 |-------|--------|----------------|
 | W1 Foundation | ✅ Complete | Async DB layer (SQLAlchemy + asyncpg), Celery pipeline (4 queues), Alembic migrations, CLI |
 | W2 API + Auth | ✅ Complete | FastAPI backend, EdDSA JWT device-pairing auth, REST API, WebSocket bridge, idempotency middleware |
-| W3–W6 | Planned | LinkedIn safety, Gmail classifier, push notifications, KEK rotation, rollback runbooks |
+| W3 Operator Console | 🔄 In Progress | SPA operator UI (Orbital Command), integrations/DLQ/config/audit/selectors routers, boot-time autostart |
+| W4–W6 | Planned | LinkedIn safety, Gmail classifier, push notifications, KEK rotation, rollback runbooks |
 
 **W2 — all tasks complete (2026-04-26):**
 
@@ -25,9 +26,28 @@ Production-oriented Python workflow for scraping jobs, ranking them with OpenAI 
 | 18 | `ConnectionManager`, WebSocket `/api/v1/ws`, Redis pubsub bridge (lifespan task) |
 | 19 | `GET /api/v1/status` (auth-gated), `python main.py serve` CLI subcommand |
 
-**Test suite:** 23/23 API tests pass (`tests/api/`)
+**W3 — shipped so far (2026-04-28):**
+
+| Commit | What shipped |
+|--------|--------------|
+| `d49123e` | StaticFiles mount + SPA catch-all route |
+| `4b48705` | AuditLog, Integration, SelectorOverride, ConfigVersion repositories |
+| `935c854` | ACID-safe `IntegrationsRepository.upsert()` (INSERT ON CONFLICT) |
+| `6aefe5d` | Pydantic schemas for integrations, DLQ, config, audit, selectors |
+| `0ee19d0` | **Auth fix:** Ed25519 public-key transport switched PEM → DER hex (all 44 tests green) |
+| `cfa7780` | **Auth fix:** `_normalize_pem()` expands `\n` escape from systemd env vars; JWT keypair added to `.env` |
+
+**UI:** Complete OLED dark / HUD sci-fi design (Orbital Command) — CSS custom properties, radar animations, toast notifications, skeleton loading, SVG nav icons.
+
+**Autostart:** 3-service systemd chain (`job-automation-ai-infra` → `job-automation-ai` → `job-automation-ai-browser`) launches Docker, FastAPI, and opens browser on login.
+
+**Test suite:** 44/44 API tests pass (`tests/api/`)
 
 **Session memory:** `memory/project_status.md`
+
+**Pending (resume after reboot):**
+- Verify full browser pairing flow works end-to-end (JWT key fix needs server restart with new env)
+- Integrations/DLQ/Config/Audit/Selectors routers (Tasks 3–8 of W3 plan)
 
 ---
 

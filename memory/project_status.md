@@ -1,109 +1,72 @@
 ---
-name: W2 Implementation Status
-description: Current branch, completed tasks, next task, and key implementation decisions for W2 API + Auth
+name: W3 Operator Console — In Progress
+description: Current branch, completed work, open bug, and next steps for W3 console implementation
 type: project
 ---
 
-Branch: `prod/w1-foundation`
+Branch: `prod/w3-console`
 
-**Why:** W2 adds FastAPI backend with EdDSA JWT device-pairing auth, REST API, WebSocket bridge, idempotency middleware. Plan at `docs/superpowers/plans/2026-04-24-w2-api-auth.md`. Spec at `docs/superpowers/specs/2026-04-24-w2-api-auth-design.md`.
+**Why:** W3 adds the Orbital Command SPA operator console — integrations, DLQ, config versions, audit log, selector overrides routers + full OLED/HUD UI. Plan at `docs/superpowers/plans/2026-04-26-w3-operator-console.md`.
 
-**How to apply:** Resume subagent-driven development at Task 5. Use `superpowers:subagent-driven-development` skill. For each task: dispatch implementer → spec review → code quality review → fix issues → mark complete.
-
----
-
-## Completed Tasks (Tasks 0–4)
-
-| Task | Commit(s) | Notes |
-|------|-----------|-------|
-| 0: Add deps | bb1b80a, a51139d | PyJWT[crypto]==2.9.0, qrcode==7.4.2, cryptography==47.0.0 |
-| 1: Extend Settings | 528c03b, 3d8ec7c, 8527245 | 11 new fields; Literal types for jwt_algorithm/environment; model_validator rejects placeholder key in non-dev |
-| 2: Revise Device ORM | 5c5822a, 13dfc0f | Session model dropped; public_key LargeBinary→Text; added pairing_ip/last_ip/last_user_agent INET/Text; InetString TypeDecorator for asyncpg coercion |
-| 3: Alembic migration | ec4b3fa, 5ed6d50 | Alembic at src/data/migrations/ (pre-existing); async env.py with single run_sync; migration adds 3 columns, drops sessions, casts public_key via convert_from(bytea,'UTF8') |
-| 4: DevicesRepository | d968261, 68ecdc2 | get/create/touch/revoke; touch/revoke use self.session (not passed session param); unique test keys with uuid suffix |
-
-**HEAD commit:** `68ecdc2`
+**How to apply:** Resume at Task 3 (integrations router). Tests at `tests/api/test_integrations.py` already exist.
 
 ---
 
-## Next Task: Task 5 — JWT Security Helpers
+## W2 — Complete (2026-04-26, branch merged)
 
-**Files:**
-- Create: `src/api/__init__.py`
-- Create: `src/api/core/__init__.py`
-- Create: `src/api/core/security.py`
-- Create: `tests/api/__init__.py`
-- Create: `tests/api/test_security.py`
-
-**What to build:**
-
-```python
-# src/api/core/security.py
-def create_jwt(device_id: uuid.UUID, *, private_key_pem: str | None = None) -> str:
-    # uses settings.jwt_private_key if private_key_pem not given
-    # payload: sub=str(device_id), jti=uuid4, iat=now, exp=now+ttl_days*86400
-    # signs with EdDSA via PyJWT
-
-def decode_jwt(token: str, *, public_key_pem: str | None = None) -> dict:
-    # uses settings.jwt_public_key if not given
-    # decodes with leeway=settings.jwt_leeway_seconds
-```
-
-**Tests:**
-- `test_create_and_decode_jwt` — round-trip
-- `test_decode_jwt_wrong_key_raises` — InvalidSignatureError
-
-**Package stubs to create first:**
-```bash
-mkdir -p src/api/core src/api/middleware src/api/routers src/api/services src/api/schemas
-touch src/api/__init__.py src/api/core/__init__.py src/api/middleware/__init__.py
-touch src/api/routers/__init__.py src/api/services/__init__.py src/api/schemas/__init__.py
-mkdir -p tests/api
-touch tests/api/__init__.py
-```
+All 20 tasks shipped. 44/44 API tests pass.
 
 ---
 
-## Remaining Tasks (6–19)
+## W3 — Completed So Far (2026-04-28)
 
-- Task 6: App factory + /health
-- Task 7: Common schemas (PaginatedResponse, ErrorResponse)
-- Task 8: Bootstrap CLI command
-- Task 9: Auth schemas + Redis dependency
-- Task 10: Auth service + challenge/pair endpoints (includes rate limiting fix: add ip param to store_challenge)
-- Task 11: get_current_device dependency
-- Task 12: Devices router (revoke)
-- Task 13: Idempotency middleware
-- Task 14: Jobs router + list_paginated
-- Task 15: Runs router + list_paginated
-- Task 16: Applications router + list_paginated
-- Task 17: Pipeline trigger endpoint
-- Task 18: ConnectionManager + WebSocket router
-- Task 19: Status endpoint + serve CLI
+| Commit | What shipped |
+|--------|--------------|
+| `d49123e` | StaticFiles mount + SPA catch-all route |
+| `4b48705` | AuditLog, Integration, SelectorOverride, ConfigVersion repositories |
+| `935c854` | ACID-safe `IntegrationsRepository.upsert()` (INSERT ON CONFLICT) |
+| `6aefe5d` | Pydantic schemas — integrations, DLQ, config, audit, selectors |
+| `0ee19d0` | Auth bug fix: Ed25519 pairing switched PEM → DER hex (all 44 tests green) |
+| `cfa7780` | Auth bug fix: `_normalize_pem()` + JWT keypair added to `.env` |
+
+**UI complete:** Orbital Command OLED dark / HUD sci-fi SPA — CSS custom properties, radar ring animations, HUD corner brackets, toast notifications, skeleton loading, SVG Heroicons nav, live clock in topbar.
+
+**Autostart:** 3-service systemd chain on login:
+- `job-automation-ai-infra.service` — docker compose up (Postgres + Redis)
+- `job-automation-ai.service` — FastAPI server
+- `job-automation-ai-browser.service` — polls /health then xdg-open localhost:8000
 
 ---
 
-## Key Architecture Decisions
+## Auth Bugs Fixed (Root Causes)
 
-- EdDSA JWT (not HS256) — asymmetric, Ed25519 keypair
-- 3-step pairing: bootstrap secret → challenge → pair with signature
-- JWT revocation: JTI in Redis (`revoked:jti:{jti}` with TTL); device-wide via `revoked_at` column
-- Token rotation at 6 days (TTL is 7 days) via `X-Auth-Next-Token` header
-- Idempotency: Stripe-style `Idempotency-Key` header, Redis `idem:{device_id}:{key}` TTL 24h
-- WebSocket: ConnectionManager (`dict[str, set[WebSocket]]`) + Redis pubsub bridge
-- Rate limiting: `pair:{ip}` Redis INCR → 5/min → 429 (in store_challenge, needs ip param)
+1. **PEM → DER hex migration** (`0ee19d0`): Browser `crypto.subtle.exportKey('spki')` exports DER bytes. Original code used a fragile `_rawToPem` spread-operator btoa. Fixed by: browser sends `_bytesToHex(new Uint8Array(spkiDer))`, server uses `load_der_public_key(bytes.fromhex(...))`.
+
+2. **JWT key missing from .env** (`cfa7780`): Server fell back to `SecretStr("placeholder")` for `jwt_private_key`. `create_jwt()` called `load_pem_private_key("placeholder")` → ValueError with "Unable to load PEM file. MalformedFraming". Fixed by: generating Ed25519 keypair and appending to `.env`; adding `_normalize_pem()` to expand literal `\n` from systemd EnvironmentFile.
+
+---
+
+## Next Steps (after reboot verification)
+
+1. **Verify browser pairing works** — generate bootstrap secret with `python main.py bootstrap`, paste into localhost:8000, confirm token stored in localStorage
+2. **Task 3: integrations router** — `src/api/routers/integrations.py`, test at `tests/api/test_integrations.py`
+3. **Tasks 4–8:** DLQ, config versions, audit log, selectors routers
+4. **Mount all W3 routers** in `create_app()`
+
+---
 
 ## Key File Locations
 
 - Settings: `src/settings.py` (get_settings LRU-cached)
-- DB engine: `src/data/db.py` (get_engine, reset_engine_cache)
-- Models: `src/data/models/` (Base, Device, Job, Run, Application, etc.)
-- Repositories: `src/data/repositories/`
-- Alembic: `src/data/migrations/` (NOT `alembic/`)
+- Auth service: `src/api/services/auth.py` (pair_device, store_challenge)
+- JWT helpers: `src/api/core/security.py` (create_jwt, decode_jwt, _normalize_pem)
+- Auth router: `src/api/routers/auth.py`
+- SPA static: `static/` (index.html, style.css, app.js, auth.js)
+- Repositories: `src/data/repositories/` (devices, audit_logs, integrations, selector_overrides, config_versions)
+- W3 schemas: `src/api/schemas/` (integrations.py, dlq.py, config.py, audit.py, selectors.py)
 - Test conftest: `tests/conftest.py` (testcontainers Postgres+Redis, JWT key fixtures)
-- Plan: `docs/superpowers/plans/2026-04-24-w2-api-auth.md`
+- W3 Plan: `docs/superpowers/plans/2026-04-26-w3-operator-console.md`
 
 ## Known Pre-existing Failures
 
-- `tests/test_notion_sync.py` — `FakeNotionAPIClient` missing `query_database` — unrelated to W2
-- `scratch/test_api_flow.py` — scratch file, ignored
+- `tests/test_notion_sync.py` — `FakeNotionAPIClient` missing `query_database` — unrelated to W3
