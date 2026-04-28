@@ -12,9 +12,14 @@ from cryptography.hazmat.primitives.serialization import (
 from src.settings import get_settings
 
 
+def _normalize_pem(pem_str: str) -> bytes:
+    """Expand literal \\n escape sequences so keys from env vars work correctly."""
+    return pem_str.replace("\\n", "\n").encode()
+
+
 def create_jwt(device_id: uuid.UUID, *, private_key_pem: str | None = None) -> str:
     settings = get_settings()
-    pem = (private_key_pem or settings.jwt_private_key.get_secret_value()).encode()
+    pem = _normalize_pem(private_key_pem or settings.jwt_private_key.get_secret_value())
     private_key = load_pem_private_key(pem, password=None)
     now = int(time.time())
     payload = {
@@ -28,7 +33,7 @@ def create_jwt(device_id: uuid.UUID, *, private_key_pem: str | None = None) -> s
 
 def decode_jwt(token: str, *, public_key_pem: str | None = None) -> dict:
     settings = get_settings()
-    pem = (public_key_pem or settings.jwt_public_key).encode()
+    pem = _normalize_pem(public_key_pem or settings.jwt_public_key)
     public_key = load_pem_public_key(pem)
     return pyjwt.decode(
         token,
