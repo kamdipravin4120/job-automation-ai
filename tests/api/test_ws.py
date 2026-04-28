@@ -29,7 +29,7 @@ def _sync_pair(client, redis_url: str) -> str:
         Encoding, NoEncryption, PrivateFormat, PublicFormat,
     )
     priv = Ed25519PrivateKey.generate()
-    pub = priv.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
+    pub = priv.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo).hex()
     secret = secrets.token_bytes(32).hex()
 
     r = syncredis.from_url(redis_url)

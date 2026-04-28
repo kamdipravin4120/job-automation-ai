@@ -18,18 +18,13 @@ function _bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function _rawToPem(raw, label) {
-  const b64 = btoa(String.fromCharCode(...new Uint8Array(raw)));
-  const lines = b64.match(/.{1,64}/g).join('\n');
-  return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----`;
-}
-
 async function pairDevice(bootstrapSecret) {
   const keyPair = await crypto.subtle.generateKey(
     { name: 'Ed25519' }, true, ['sign', 'verify']
   );
+  // Export SPKI as DER bytes → hex string; server uses load_der_public_key (no PEM framing needed)
   const pubRaw = await crypto.subtle.exportKey('spki', keyPair.publicKey);
-  const pubPem = _rawToPem(pubRaw, 'PUBLIC KEY');
+  const pubHex = _bytesToHex(new Uint8Array(pubRaw));
 
   const cr = await fetch('/api/v1/auth/challenge', {
     method: 'POST',
@@ -52,7 +47,7 @@ async function pairDevice(bootstrapSecret) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       bootstrap_secret: bootstrapSecret,
-      public_key: pubPem,
+      public_key: pubHex,
       signature: sigHex,
     }),
   });

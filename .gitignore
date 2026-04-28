@@ -11,3 +11,5 @@ logs/
 .DS_Store
 .vscode/
 scratch/
+.claude/scheduled_tasks.lock
+.gstack/

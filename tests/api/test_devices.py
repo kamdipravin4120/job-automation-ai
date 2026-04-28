@@ -11,8 +11,8 @@ async def _pair_device(async_client, redis_client):
     )
     device_priv = Ed25519PrivateKey.generate()
     device_pub_pem = device_priv.public_key().public_bytes(
-        Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-    ).decode()
+        Encoding.DER, PublicFormat.SubjectPublicKeyInfo
+    ).hex()
 
     secret = secrets.token_bytes(32).hex()
     await redis_client.setex(f"bootstrap:{secret}", 600, json.dumps({"issued_at": 0}))

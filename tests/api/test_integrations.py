@@ -10,7 +10,7 @@ async def _get_token(async_client, redis_client) -> str:
         Encoding, NoEncryption, PrivateFormat, PublicFormat,
     )
     priv = Ed25519PrivateKey.generate()
-    pub_pem = priv.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
+    pub_pem = priv.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo).hex()
     secret = secrets.token_bytes(32).hex()
     await redis_client.setex(f"bootstrap:{secret}", 600, json.dumps({"issued_at": 0}))
     r = await async_client.post("/api/v1/auth/challenge", json={"bootstrap_secret": secret})

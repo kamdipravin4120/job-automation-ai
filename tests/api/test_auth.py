@@ -35,12 +35,10 @@ async def test_full_pairing_flow(async_client, redis_client, test_private_pem, t
 
     # Generate device keypair
     device_priv_key = Ed25519PrivateKey.generate()
-    device_priv_pem = device_priv_key.private_bytes(
-        Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()
-    ).decode()
-    device_pub_pem = device_priv_key.public_key().public_bytes(
-        Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-    ).decode()
+    # Send DER-encoded SPKI as hex (browser sends via crypto.subtle exportKey('spki') → hex)
+    device_pub_der_hex = device_priv_key.public_key().public_bytes(
+        Encoding.DER, PublicFormat.SubjectPublicKeyInfo
+    ).hex()
 
     # Plant bootstrap secret
     secret = secrets.token_bytes(32).hex()
@@ -56,7 +54,7 @@ async def test_full_pairing_flow(async_client, redis_client, test_private_pem, t
     signature = device_priv_key.sign(challenge_bytes).hex()
     r = await async_client.post("/api/v1/auth/pair", json={
         "bootstrap_secret": secret,
-        "public_key": device_pub_pem,
+        "public_key": device_pub_der_hex,
         "signature": signature,
     })
     assert r.status_code == 201
@@ -71,9 +69,9 @@ async def test_pair_invalid_signature_401(async_client, redis_client):
     )
 
     device_priv_key = Ed25519PrivateKey.generate()
-    device_pub_pem = device_priv_key.public_key().public_bytes(
-        Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-    ).decode()
+    device_pub_der_hex = device_priv_key.public_key().public_bytes(
+        Encoding.DER, PublicFormat.SubjectPublicKeyInfo
+    ).hex()
 
     secret = secrets.token_bytes(32).hex()
     await redis_client.setex(f"bootstrap:{secret}", 600, json.dumps({"issued_at": 0}))
@@ -83,7 +81,7 @@ async def test_pair_invalid_signature_401(async_client, redis_client):
 
     r = await async_client.post("/api/v1/auth/pair", json={
         "bootstrap_secret": secret,
-        "public_key": device_pub_pem,
+        "public_key": device_pub_der_hex,
         "signature": "deadbeef" * 8,  # invalid — 32 chars, not a valid Ed25519 sig
     })
     assert r.status_code == 401

@@ -7,7 +7,11 @@ import uuid
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    PublicFormat,
+    load_der_public_key,
+)
 
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,12 +76,15 @@ async def pair_device(
         raise ValueError("challenge_expired")
     challenge_bytes = bytes.fromhex(ch_val)
 
-    # Verify Ed25519 signature
+    # Verify Ed25519 signature — public_key_pem is now hex-encoded DER (SPKI)
     try:
-        pub_key: Ed25519PublicKey = load_pem_public_key(public_key_pem.encode())  # type: ignore[assignment]
+        pub_key: Ed25519PublicKey = load_der_public_key(bytes.fromhex(public_key_pem))  # type: ignore[assignment]
         pub_key.verify(bytes.fromhex(signature_hex), challenge_bytes)
     except (InvalidSignature, Exception):
         raise ValueError("invalid_signature")
+
+    # Re-serialise to PEM for storage (existing devices table stores PEM)
+    public_key_pem = pub_key.public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
 
     # Consume bootstrap secret (single-use)
     await redis.delete(bs_key)

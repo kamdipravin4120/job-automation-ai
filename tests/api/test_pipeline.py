@@ -9,7 +9,7 @@ async def _get_token(async_client, redis_client) -> str:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat, PublicFormat
     priv = Ed25519PrivateKey.generate()
-    pub = priv.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
+    pub = priv.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo).hex()
     s = secrets.token_bytes(32).hex()
     await redis_client.setex(f"bootstrap:{s}", 600, json.dumps({"issued_at": 0}))
     r = await async_client.post("/api/v1/auth/challenge", json={"bootstrap_secret": s})
