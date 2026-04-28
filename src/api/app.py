@@ -21,6 +21,7 @@ from src.api.routers.integrations import router as integrations_router
 from src.api.routers.dlq import router as dlq_router
 from src.api.routers.config import router as config_router
 from src.api.routers.audit import router as audit_router
+from src.api.routers.selectors import router as selectors_router
 from src.api.middleware.idempotency import IdempotencyMiddleware
 from src.api.core.deps import get_current_device
 
@@ -82,6 +83,7 @@ def create_app() -> FastAPI:
     app.include_router(dlq_router,          prefix="/api/v1/dlq",          tags=["dlq"])
     app.include_router(config_router,       prefix="/api/v1/config",       tags=["config"])
     app.include_router(audit_router,        prefix="/api/v1/audit",        tags=["audit"])
+    app.include_router(selectors_router,    prefix="/api/v1/selectors",    tags=["selectors"])
 
     # SPA catch-all — MUST be last so all /api/v1/* routes match first
     @app.get("/{full_path:path}", include_in_schema=False)
