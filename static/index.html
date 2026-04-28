@@ -1,152 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Automation AI | Command Console</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orbital Command — Operator Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="command-deck">
-    <!-- TACTICAL SIDEBAR -->
-    <nav class="sidebar">
-        <div class="brand-tactical">
-            <div class="pulse-ring"></div>
-            <span>ORCHESTRATOR</span>
-        </div>
-        <ul class="nav-links">
-            <li class="active"><a href="#dashboard"><span class="icon">🛰️</span> CORE_NERVE</a></li>
-            <li><a href="#applications"><span class="icon">📋</span> TARGETS</a></li>
-            <li><a href="#linkedin"><span class="icon">✨</span> BRAND_CALIB</a></li>
-            <li><a href="#profile"><span class="icon">👤</span> IDENTITY</a></li>
-            <li><a href="#settings"><span class="icon">⚙️</span> SYS_CONF</a></li>
-        </ul>
-        <div class="user-hub">
-            <div id="user-avatar" class="avatar-ring">?</div>
-            <div class="user-meta">
-                <div id="user-name" class="name">GUEST_USER</div>
-                <div class="status">SESSION: ACTIVE</div>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <!-- MISSION LOG SIDEBAR (TRACING) -->
-    <aside class="mission-log">
-        <div class="log-header">
-            <span class="tag">ENGINEERING_LOG.RAW</span>
-            <div class="status-dot online"></div>
-        </div>
-        <div id="terminal-stream" class="terminal">
-            <!-- Entries added by JS -->
-        </div>
-    </aside>
+<div id="login-screen" class="oc-login" style="display:none">
+  <div class="oc-login-card">
+    <h2>ORBITAL COMMAND</h2>
+    <p>Paste the bootstrap secret from <code>python main.py bootstrap</code> to pair this browser as an operator device.</p>
+    <div class="oc-field">
+      <label class="oc-label" for="bootstrap-input">BOOTSTRAP SECRET</label>
+      <input id="bootstrap-input" class="oc-input" type="password" placeholder="32-byte hex..." autocomplete="off">
+    </div>
+    <button id="login-btn" class="oc-btn oc-btn-primary" style="width:100%;justify-content:center">PAIR DEVICE</button>
+    <div id="login-err" class="oc-login-err"></div>
+  </div>
+</div>
 
-    <!-- MISSION CONTROL CENTER (TOP HEADER) -->
-    <header class="hud-header" style="grid-column: 2/3; grid-row: 1/2; margin-bottom: 0; padding: 1rem 1.5rem;">
-        <div class="mission-status">
-            <span id="view-title">SYSTEM_CORE_IDLE</span>
-            <span class="location">LOCATION: EARTH_ORBITAL_STATION</span>
-        </div>
-        <div class="quick-actions" style="display: flex; gap: 1rem;">
-            <button class="btn-tactical" onclick="triggerSync()">[ SYNC_NOTION ]</button>
-        </div>
-    </header>
+<div id="console-shell" class="oc-shell" style="display:none">
+  <nav class="oc-nav">
+    <div class="oc-brand"><span class="pulse"></span>ORBITAL CMD</div>
+    <a href="#/dashboard"    class="nav-link" data-route="dashboard"   ><span>&#11043;</span> DASHBOARD</a>
+    <a href="#/integrations" class="nav-link" data-route="integrations"><span>&#11043;</span> INTEGRATIONS</a>
+    <a href="#/runs"         class="nav-link" data-route="runs"        ><span>&#11043;</span> RUNS</a>
+    <a href="#/dlq"          class="nav-link" data-route="dlq"         ><span>&#11043;</span> DLQ</a>
+    <a href="#/config"       class="nav-link" data-route="config"      ><span>&#11043;</span> CONFIG</a>
+    <a href="#/audit"        class="nav-link" data-route="audit"       ><span>&#11043;</span> AUDIT</a>
+    <a href="#/selectors"    class="nav-link" data-route="selectors"   ><span>&#11043;</span> SELECTORS</a>
+    <div style="flex:1"></div>
+    <a href="#" id="logout-btn" class="nav-link"><span>&#9211;</span> LOGOUT</a>
+  </nav>
+  <header class="oc-topbar">
+    <h1 id="view-label">DASHBOARD</h1>
+    <button id="trigger-btn" class="oc-btn oc-btn-primary" style="font-size:.7rem">&#9654; TRIGGER PIPELINE</button>
+  </header>
+  <main class="oc-main">
 
-    <!-- MAIN DASHBOARD CONTENT -->
-    <main class="main-viewport" style="grid-column: 2/3; grid-row: 2/3;">
-        <!-- VIEW: DASHBOARD -->
-        <div id="view-dashboard" class="spa-view active">
-            <div class="agent-deck">
-                <div class="globe-container">
-                    <svg viewBox="0 0 100 100" class="tactical-globe">
-                        <circle cx="50" cy="50" r="48" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" stroke-dasharray="1 2"/>
-                        <circle cx="50" cy="50" r="35" fill="none" stroke="var(--neon-cyan)" stroke-width="0.05" opacity="0.3"/>
-                        <path d="M10 50 Q 50 10 90 50 T 10 50" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" opacity="0.2"/>
-                        <path d="M50 10 Q 90 50 50 90 T 50 10" fill="none" stroke="var(--neon-cyan)" stroke-width="0.1" opacity="0.2"/>
-                        <line x1="50" y1="50" x2="50" y2="2" stroke="var(--neon-cyan)" stroke-width="0.3" class="radar-sweep"/>
-                    </svg>
-                </div>
-
-                <div id="agent-scout" class="glass-node">
-                    <div class="node-header"><span class="tag">AG_01_SCOUT</span><div class="status-dot online"></div></div>
-                    <div class="node-body">
-                        <h3>MARKET_DISCOVERY</h3>
-                        <p>JOBS_FOUND: <span id="scout-count">0</span></p>
-                        <p>LAST_SYNC: NEVER</p>
-                    </div>
-                </div>
-
-                <div id="agent-analyst" class="glass-node">
-                    <div class="node-header"><span class="tag">AG_02_ANALYST</span><div class="status-dot processing"></div></div>
-                    <div class="node-body">
-                        <h3>STRATEGY_CALIB</h3>
-                        <p>AVG_MATCH: --%</p>
-                        <p>DNA_MAP: ACTIVE</p>
-                    </div>
-                </div>
-
-                <div id="agent-liaison" class="glass-node">
-                    <div class="node-header"><span class="tag">AG_03_LIAISON</span><div class="status-dot idle"></div></div>
-                    <div class="node-body">
-                        <h3>TARGET_OUTREACH</h3>
-                        <p>APPS_SENT: 0</p>
-                        <p>WAIT_ACK: 0</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mission-featured glass-node">
-                <div class="node-header"><span class="tag">RECENT_MISSION_TARGETS</span></div>
-                <div class="node-body" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div id="job-featured">
-                        <h2 id="job-title-display" style="font-family: var(--mono-font); font-size: 0.9rem;">MISSION_PENDING</h2>
-                        <p id="job-company-display" style="font-size: 0.6rem; color: var(--text-secondary);">Awaiting synchronization...</p>
-                    </div>
-                    <div class="action-row" style="display: flex; gap: 0.5rem;">
-                        <button id="tailor-btn" class="btn-tactical">[ TAILOR_DNA ]</button>
-                        <a id="apply-btn" href="#" target="_blank" class="btn-tactical" style="text-decoration: none;">[ MANUAL_APPLY ]</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- VIEW: APPLICATIONS -->
-        <div id="view-applications" class="spa-view">
-            <div class="glass-node" style="height: 100%;">
-                <div class="node-header"><span class="tag">CENTRAL_TARGET_DATABASE</span></div>
-                <div class="table-container" style="overflow-y: auto; height: calc(100% - 40px);">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>TITLE</th>
-                                <th>ORG</th>
-                                <th>SCORE</th>
-                                <th>STATUS</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="app-list-full"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- MISSION TRAY (TELEMETRY) -->
-    <div id="global-mission-tray" class="mission-tray-container">
-        <div class="tray-handle" style="font-family: var(--mono-font); font-size: 0.6rem; color: var(--text-secondary); height: 30px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--glass-border);">
-            <span>📊 MISSION_TELEMETRY_DATAFEED</span>
-        </div>
-        <div style="overflow-y: auto; flex-grow: 1;">
-            <table class="data-table">
-                <thead><tr><th>TITLE</th><th>ORG</th><th>SCORE</th><th>STATUS</th></tr></thead>
-                <tbody id="tray-list-data"></tbody>
-            </table>
-        </div>
+    <div id="view-dashboard" class="oc-view">
+      <div class="oc-stats" id="dash-stats"></div>
+      <div class="oc-card">
+        <div class="oc-card-header"><span class="oc-card-title">RECENT RUNS</span></div>
+        <div class="oc-table-wrap"><table class="oc-table">
+          <thead><tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>FINISHED</th></tr></thead>
+          <tbody id="dash-runs"></tbody>
+        </table></div>
+      </div>
     </div>
 
-    <script src="/static/app.js"></script>
+    <div id="view-integrations" class="oc-view">
+      <div id="integrations-list"></div>
+    </div>
+
+    <div id="view-runs" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">RUNS</span>
+          <select id="runs-status-filter" class="oc-input" style="width:120px;padding:.3rem .5rem">
+            <option value="">ALL</option>
+            <option value="queued">QUEUED</option>
+            <option value="running">RUNNING</option>
+            <option value="succeeded">SUCCEEDED</option>
+            <option value="failed">FAILED</option>
+          </select>
+        </div>
+        <div class="oc-table-wrap"><table class="oc-table">
+          <thead><tr><th>KIND</th><th>CORRELATION</th><th>STATUS</th><th>STARTED</th><th>RETRIES</th></tr></thead>
+          <tbody id="runs-list"></tbody>
+        </table></div>
+        <div id="runs-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+      </div>
+    </div>
+
+    <div id="view-dlq" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header"><span class="oc-card-title">DEAD-LETTER QUEUE</span></div>
+        <div class="oc-table-wrap"><table class="oc-table">
+          <thead><tr><th>KIND</th><th>CORRELATION</th><th>ERROR</th><th>RETRIES</th><th>ACTIONS</th></tr></thead>
+          <tbody id="dlq-list"></tbody>
+        </table></div>
+        <div id="dlq-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+      </div>
+    </div>
+
+    <div id="view-config" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header"><span class="oc-card-title">CONFIG.YAML</span></div>
+        <div class="oc-field">
+          <textarea id="config-editor" class="oc-input oc-textarea" spellcheck="false"></textarea>
+        </div>
+        <div id="config-diff" class="oc-diff" style="display:none"></div>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem">
+          <button id="config-save-btn" class="oc-btn oc-btn-primary">SAVE</button>
+        </div>
+        <div id="config-msg" style="margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.75rem"></div>
+      </div>
+    </div>
+
+    <div id="view-audit" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">AUDIT LOG</span>
+          <div style="display:flex;gap:.5rem">
+            <input id="audit-actor-filter"  class="oc-input" style="width:140px;padding:.3rem .5rem" placeholder="actor...">
+            <input id="audit-action-filter" class="oc-input" style="width:160px;padding:.3rem .5rem" placeholder="action...">
+            <button id="audit-filter-btn" class="oc-btn oc-btn-ghost">FILTER</button>
+          </div>
+        </div>
+        <div class="oc-table-wrap"><table class="oc-table">
+          <thead><tr><th>TIME</th><th>ACTOR</th><th>ACTION</th><th>TARGET</th></tr></thead>
+          <tbody id="audit-list"></tbody>
+        </table></div>
+        <div id="audit-pagination" style="padding:.75rem 0;display:flex;gap:.5rem;justify-content:flex-end"></div>
+      </div>
+    </div>
+
+    <div id="view-selectors" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header"><span class="oc-card-title">PENDING SELECTOR PROPOSALS</span></div>
+        <div id="selectors-list"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/static/auth.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>
