@@ -50,7 +50,7 @@ def test_linkedin_safety_defaults():
         "DATABASE_URL": "postgresql+asyncpg://x/x",
         "CELERY_BROKER_URL": "redis://x", "CELERY_RESULT_BACKEND": "redis://x",
     }):
-        from importlib import import_module, reload
+        from importlib import reload
         import src.settings as settings_mod
         reload(settings_mod)
         s = settings_mod.Settings()
