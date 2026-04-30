@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     rate_limit_pair_per_min: int = 5
     rate_limit_auth_per_min: int = 60
 
+    # LinkedIn safety / rate limits
+    linkedin_apps_per_hour: int = 10
+    linkedin_searches_per_hour: int = 20
+    linkedin_health_check_every_n: int = 5
+    linkedin_circuit_max_failures: int = 3
+    linkedin_circuit_cooldown_seconds: int = 300
+    linkedin_cooldown_between_apps_ms: int = 4000
+
     # App
     app_version: str = "0.2.0"
     environment: Literal["development", "staging", "production"] = "development"

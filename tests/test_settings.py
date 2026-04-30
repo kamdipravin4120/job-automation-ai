@@ -1,4 +1,6 @@
+import os
 import pytest
+from unittest.mock import patch
 
 from src.settings import Settings, SettingsError
 
@@ -40,3 +42,21 @@ def test_loads_from_env(monkeypatch):
     assert settings.openai_api_key.get_secret_value() == "x"
     assert settings.log_level == "DEBUG"
     assert settings.log_format == "kv"
+
+
+def test_linkedin_safety_defaults():
+    with patch.dict(os.environ, {
+        "OPENAI_API_KEY": "x", "ANTHROPIC_API_KEY": "x",
+        "DATABASE_URL": "postgresql+asyncpg://x/x",
+        "CELERY_BROKER_URL": "redis://x", "CELERY_RESULT_BACKEND": "redis://x",
+    }):
+        from importlib import import_module, reload
+        import src.settings as settings_mod
+        reload(settings_mod)
+        s = settings_mod.Settings()
+        assert s.linkedin_apps_per_hour == 10
+        assert s.linkedin_searches_per_hour == 20
+        assert s.linkedin_health_check_every_n == 5
+        assert s.linkedin_circuit_max_failures == 3
+        assert s.linkedin_circuit_cooldown_seconds == 300
+        assert s.linkedin_cooldown_between_apps_ms == 4000
