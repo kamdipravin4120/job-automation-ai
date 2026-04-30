@@ -51,3 +51,18 @@ class RateGuard:
                 return False
             self._search_tokens -= 1
             return True
+
+
+@dataclass
+class SessionMonitor:
+    """Re-verify LinkedIn login every N applications to catch mid-batch session expiry."""
+
+    check_every_n: int = 5
+    _apply_count: int = field(init=False, default=0)
+
+    def should_check_health(self) -> bool:
+        self._apply_count += 1
+        return self._apply_count % self.check_every_n == 0
+
+    def reset(self) -> None:
+        self._apply_count = 0
