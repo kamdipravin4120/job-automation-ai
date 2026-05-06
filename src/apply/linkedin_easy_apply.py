@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
+from src.apply.safety import CircuitBreaker, RateGuard, SessionMonitor
 from src.models import ApplicationRecord
+from src.settings import get_settings
 from src.utils.browser import browser_session, human_delay, prompt_for_login
 from src.utils.config import ApplyConfig
 from src.utils.files import resolve_path
@@ -19,6 +22,17 @@ class LinkedInEasyApplyBot:
         if not records:
             return []
 
+        settings = get_settings()
+        guard = RateGuard(
+            apps_per_hour=settings.linkedin_apps_per_hour,
+            searches_per_hour=settings.linkedin_searches_per_hour,
+        )
+        monitor = SessionMonitor(check_every_n=settings.linkedin_health_check_every_n)
+        breaker = CircuitBreaker(
+            max_consecutive_failures=settings.linkedin_circuit_max_failures,
+            cooldown_seconds=settings.linkedin_circuit_cooldown_seconds,
+        )
+
         storage_state_path = resolve_path(self.config_dir, self.config.storage_state_path)
         results: list[ApplicationRecord] = []
         max_records = limit or self.config.max_applications_per_run
@@ -33,31 +47,67 @@ class LinkedInEasyApplyBot:
                 landing_url="https://www.linkedin.com/feed/",
                 login_check_selector=self.config.login_check_selector,
             )
-            
-            # Double-check: ensure the user profile photo is genuinely visible
+
             is_logged_in = False
             for selector in (self.config.login_check_selector or ["img.global-nav__me-photo"]):
                 if page.locator(selector).first.is_visible():
                     is_logged_in = True
                     break
-            
+
             if not is_logged_in:
                 self.logger.warning("Session appears expired. Requesting manual re-authentication.")
                 prompt_for_login(page, landing_url="https://www.linkedin.com/feed/", login_check_selector="img.global-nav__me-photo")
 
             for record in records[:max_records]:
-                page = context.new_page()
-                page.set_default_timeout(self.config.timeout_ms)
+                if breaker.is_open():
+                    wait_secs = breaker.seconds_until_reset()
+                    self.logger.warning(
+                        "Circuit breaker open — pausing batch for %.0f seconds", wait_secs
+                    )
+                    time.sleep(min(wait_secs, 60))
+                    if breaker.is_open():
+                        record.status = "error"
+                        record.notes = "Batch halted: circuit breaker still open after cooldown."
+                        results.append(record)
+                        continue
+
+                if not guard.consume_application():
+                    self.logger.warning("Application rate limit reached — stopping batch.")
+                    record.status = "error"
+                    record.notes = "Batch halted: LinkedIn application rate limit reached."
+                    results.append(record)
+                    break
+
+                if monitor.should_check_health():
+                    still_logged_in = any(
+                        page.locator(sel).first.is_visible()
+                        for sel in (self.config.login_check_selector or ["img.global-nav__me-photo"])
+                    )
+                    if not still_logged_in:
+                        self.logger.warning("Session expired mid-batch. Re-authenticating.")
+                        prompt_for_login(page, landing_url="https://www.linkedin.com/feed/", login_check_selector="img.global-nav__me-photo")
+
+                app_page = context.new_page()
+                app_page.set_default_timeout(self.config.timeout_ms)
                 try:
-                    updated = self._apply_single(page, record)
+                    updated = self._apply_single(app_page, record)
                     results.append(updated)
+                    if updated.status == "applied":
+                        breaker.record_success()
+                    else:
+                        breaker.record_failure()
                 except Exception as exc:
                     record.status = "error"
                     record.notes = f"Application failed: {exc}"
                     results.append(record)
+                    breaker.record_failure()
                     self.logger.exception("Easy Apply failed for %s", record.job_id)
                 finally:
-                    page.close()
+                    app_page.close()
+
+                cooldown_ms = settings.linkedin_cooldown_between_apps_ms
+                time.sleep(cooldown_ms / 1000.0)
+
         return results
 
     def _apply_single(self, page, record: ApplicationRecord) -> ApplicationRecord:
