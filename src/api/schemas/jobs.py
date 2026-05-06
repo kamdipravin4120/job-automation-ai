@@ -15,5 +15,7 @@ class JobOut(BaseModel):
     status: str
     match_score: float | None
     scraped_at: datetime
+    starred: bool = False
+    dismissed: bool = False
 
     model_config = {"from_attributes": True}

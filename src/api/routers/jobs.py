@@ -8,6 +8,7 @@ from src.api.core.deps import get_current_device
 from src.api.schemas.common import PaginatedResponse
 from src.api.schemas.jobs import JobOut
 from src.data.db import get_sessionmaker
+from src.data.models.job import Job
 from src.data.repositories.jobs import JobsRepository
 
 router = APIRouter()
@@ -49,3 +50,33 @@ async def get_job(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.post("/{job_id}/star", response_model=JobOut)
+async def star_job(
+    job_id: uuid.UUID,
+    _device=Depends(get_current_device),
+    db=Depends(_get_db),
+):
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.starred = not job.starred
+    await db.commit()
+    await db.refresh(job)
+    return JobOut.model_validate(job)
+
+
+@router.post("/{job_id}/dismiss", response_model=JobOut)
+async def dismiss_job(
+    job_id: uuid.UUID,
+    _device=Depends(get_current_device),
+    db=Depends(_get_db),
+):
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job.dismissed = True
+    await db.commit()
+    await db.refresh(job)
+    return JobOut.model_validate(job)

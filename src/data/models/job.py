@@ -25,6 +25,8 @@ class Job(Base):
     score_breakdown: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="new")
     user_notes: Mapped[str] = mapped_column(Text, default="")
+    starred: Mapped[bool] = mapped_column(default=False)
+    dismissed: Mapped[bool] = mapped_column(default=False)
 
 
 class JobArtifact(Base):
