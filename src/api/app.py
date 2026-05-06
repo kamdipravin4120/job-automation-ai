@@ -28,13 +28,21 @@ from src.api.core.deps import get_current_device
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(pubsub_bridge())
+    import os
+
+    # On Vercel (serverless), skip the long-lived pubsub bridge.  The function
+    # instance has no persistent event loop between requests, so the task would
+    # be killed after the first invocation anyway.  WebSocket *connections* work
+    # fine; only the Redis→WS push path is disabled in this deployment mode.
+    _vercel = os.environ.get("VERCEL_DEPLOYMENT") or os.environ.get("VERCEL")
+    task = None if _vercel else asyncio.create_task(pubsub_bridge())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    if task is not None:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     from src.api.core.redis_dep import _close_redis
     await _close_redis()
 
@@ -84,6 +92,9 @@ def create_app() -> FastAPI:
     app.include_router(config_router,       prefix="/api/v1/config",       tags=["config"])
     app.include_router(audit_router,        prefix="/api/v1/audit",        tags=["audit"])
     app.include_router(selectors_router,    prefix="/api/v1/selectors",    tags=["selectors"])
+
+    from src.api.routers.gmail import router as gmail_router
+    app.include_router(gmail_router)
 
     # SPA catch-all — MUST be last so all /api/v1/* routes match first
     @app.get("/{full_path:path}", include_in_schema=False)
