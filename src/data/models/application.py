@@ -20,3 +20,4 @@ class Application(Base):
     recruiter: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     briefing_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
