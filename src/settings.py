@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     linkedin_circuit_cooldown_seconds: int = 300
     linkedin_cooldown_between_apps_ms: int = 4000
 
+    # Gmail OAuth (device-code flow)
+    gmail_client_id: str | None = None
+    gmail_client_secret: SecretStr | None = None
+    gmail_token_path: str = ".gmail_token.json"
+
     # App
     app_version: str = "0.2.0"
     environment: Literal["development", "staging", "production"] = "development"

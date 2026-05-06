@@ -60,3 +60,18 @@ def test_linkedin_safety_defaults():
         assert s.linkedin_circuit_max_failures == 3
         assert s.linkedin_circuit_cooldown_seconds == 300
         assert s.linkedin_cooldown_between_apps_ms == 4000
+
+
+def test_gmail_settings_defaults():
+    with patch.dict(os.environ, {
+        "OPENAI_API_KEY": "x", "ANTHROPIC_API_KEY": "x",
+        "DATABASE_URL": "postgresql+asyncpg://x/x",
+        "CELERY_BROKER_URL": "redis://x", "CELERY_RESULT_BACKEND": "redis://x",
+    }):
+        from importlib import reload
+        import src.settings as settings_mod
+        reload(settings_mod)
+        s = settings_mod.Settings()
+        assert s.gmail_client_id is None
+        assert s.gmail_client_secret is None
+        assert s.gmail_token_path == ".gmail_token.json"
