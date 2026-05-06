@@ -208,7 +208,7 @@ async function loadIntegrations() {
       : '';
     var isKey = k.provider === 'openai' || k.provider === 'anthropic';
     var action = isKey
-      ? '<input class="oc-input" id="apikey-' + k.provider + '" type="password" placeholder="sk-…" style="width:200px">' +
+      ? '<input class="oc-input" id="apikey-' + k.provider + '" type="text" autocomplete="off" spellcheck="false" placeholder="sk-…" style="width:200px">' +
         '<button class="oc-btn oc-btn-ghost oc-btn-sm" style="margin-left:.5rem" onclick="saveApiKey(\'' + k.provider + '\')">SAVE</button>'
       : '<button class="oc-btn oc-btn-ghost oc-btn-sm" disabled>' + (status === 'connected' ? 'RECONNECT' : 'CONNECT') + '</button>';
     return '<div class="oc-card">' +
