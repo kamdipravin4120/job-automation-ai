@@ -88,9 +88,9 @@ class Settings(BaseSettings):
         return self
 
     @classmethod
-    def load(cls) -> "Settings":
+    def load(cls, **kwargs) -> "Settings":
         try:
-            return cls()
+            return cls(**kwargs)
         except ValidationError as e:
             errors = [
                 ".".join(str(p) for p in err["loc"]) + ": " + err.get("msg", err["type"])

@@ -19,7 +19,7 @@ def test_missing_required_env_fails_fast(monkeypatch):
         monkeypatch.delenv(var, raising=False)
 
     with pytest.raises(SettingsError) as excinfo:
-        Settings.load()
+        Settings.load(_env_file=None)
 
     message = str(excinfo.value)
     # At least one required field name should appear in the error message
