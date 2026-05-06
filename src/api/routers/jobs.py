@@ -63,7 +63,10 @@ async def star_job(
         raise HTTPException(status_code=404, detail="Job not found")
     job.starred = not job.starred
     await db.commit()
-    await db.refresh(job)
+    try:
+        await db.refresh(job)
+    except Exception:
+        pass
     return JobOut.model_validate(job)
 
 
@@ -78,5 +81,8 @@ async def dismiss_job(
         raise HTTPException(status_code=404, detail="Job not found")
     job.dismissed = True
     await db.commit()
-    await db.refresh(job)
+    try:
+        await db.refresh(job)
+    except Exception:
+        pass
     return JobOut.model_validate(job)
