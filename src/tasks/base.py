@@ -32,6 +32,34 @@ log = get_logger("tasks.base")
 
 DO_NOT_RETRY = (UserActionRequiredError, LLMValidationError)
 
+
+def _build_push_service():
+    from src.notifications.push import PushService
+    from src.settings import get_settings
+    s = get_settings()
+    return PushService(
+        ntfy_topic_url=s.ntfy_topic_url,
+        fcm_project_id=s.fcm_project_id,
+        fcm_service_account_json=s.fcm_service_account_json,
+    )
+
+
+def _push_on_complete(stage: str, result: dict) -> None:
+    """Fire a push notification after a pipeline stage completes. Never raises."""
+    try:
+        from src.notifications.push import PushEvent
+        svc = _build_push_service()
+        body_parts = [f"Stage: {stage}"]
+        for k, v in list(result.items())[:2]:
+            body_parts.append(f"{k}: {v}")
+        svc.send_event(PushEvent(
+            title=f"Pipeline: {stage} complete",
+            body=" | ".join(body_parts),
+            data=result,
+        ))
+    except Exception:
+        log.debug("Push notification skipped (not configured or error)", exc_info=True)
+
 # Keys we'll accept from arbitrary PipelineError.details payloads without
 # worrying about leaking secrets or PII into the runs table / API envelope.
 # Anything else is replaced with the string "<redacted>". Extend deliberately.
@@ -99,6 +127,7 @@ def pipeline_task(
                     return None
                 result = fn(*args, **kwargs)
                 _mark_run_succeeded_sync(stage=stage, correlation_id=correlation_id)
+                _push_on_complete(stage=stage, result=result if isinstance(result, dict) else {})
                 return result
             except DO_NOT_RETRY as exc:
                 _mark_run_failed_sync(
