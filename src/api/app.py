@@ -96,6 +96,9 @@ def create_app() -> FastAPI:
     from src.api.routers.gmail import router as gmail_router
     app.include_router(gmail_router)
 
+    from src.api.routers.notifications import router as notifications_router
+    app.include_router(notifications_router)
+
     # SPA catch-all — MUST be last so all /api/v1/* routes match first
     @app.get("/{full_path:path}", include_in_schema=False)
     async def spa_catch_all(full_path: str):
