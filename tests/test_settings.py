@@ -75,3 +75,18 @@ def test_gmail_settings_defaults():
         assert s.gmail_client_id is None
         assert s.gmail_client_secret is None
         assert s.gmail_token_path == ".gmail_token.json"
+
+
+def test_push_notification_settings_defaults():
+    with patch.dict(os.environ, {
+        "OPENAI_API_KEY": "x", "ANTHROPIC_API_KEY": "x",
+        "DATABASE_URL": "postgresql+asyncpg://x/x",
+        "CELERY_BROKER_URL": "redis://x", "CELERY_RESULT_BACKEND": "redis://x",
+    }):
+        from importlib import reload
+        import src.settings as settings_mod
+        reload(settings_mod)
+        s = settings_mod.Settings()
+        assert s.fcm_project_id is None
+        assert s.fcm_service_account_json is None
+        assert s.ntfy_topic_url is None

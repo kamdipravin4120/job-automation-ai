@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     gmail_client_secret: SecretStr | None = None
     gmail_token_path: str = ".gmail_token.json"
 
+    # Push notifications
+    fcm_project_id: str | None = None
+    fcm_service_account_json: str | None = None
+    ntfy_topic_url: str | None = None
+
     # App
     app_version: str = "0.2.0"
     environment: Literal["development", "staging", "production"] = "development"
