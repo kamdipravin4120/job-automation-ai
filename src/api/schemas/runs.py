@@ -14,5 +14,8 @@ class RunOut(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
     error_code: str | None
+    error_details: dict | None = None
+    steps: list = []
+    jobs_found: int = 0
 
     model_config = {"from_attributes": True}
