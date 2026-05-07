@@ -19,6 +19,12 @@ val ScoreLow = Color(0xFFBE123C)
 val StatusInterview = Color(0xFFF97316)
 val StatusOffer = Color(0xFF22C55E)
 
+fun scoreColor(score: Float) = when {
+    score >= 70f -> ScoreHigh
+    score >= 40f -> ScoreMid
+    else -> ScoreLow
+}
+
 val PairingBg = Color(0xFF030308)
 val PairingAccent = Color(0xFF60A5FA)
 val PairingNeon = Color(0xFF22D3EE)
