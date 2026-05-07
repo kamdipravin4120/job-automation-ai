@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import select, update
@@ -60,7 +61,7 @@ class RunsRepository:
     async def get_by_id(self, run_id) -> Run | None:
         return await self.session.get(Run, run_id)
 
-    async def set_jobs_found(self, run_id, count: int) -> None:
+    async def set_jobs_found(self, run_id: "uuid.UUID", count: int) -> None:
         await self.session.execute(
             update(Run).where(Run.id == run_id).values(jobs_found=count)
         )
