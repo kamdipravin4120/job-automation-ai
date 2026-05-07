@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RunOut(BaseModel):
@@ -15,7 +15,7 @@ class RunOut(BaseModel):
     finished_at: datetime | None
     error_code: str | None
     error_details: dict | None = None
-    steps: list = []
+    steps: list = Field(default_factory=list)
     jobs_found: int = 0
 
     model_config = {"from_attributes": True}

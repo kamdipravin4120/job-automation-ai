@@ -44,6 +44,6 @@ async def test_run_out_has_jobs_found(async_client, redis_client, db_session):
     assert "items" in data
     assert len(data["items"]) >= 1, "Expected at least one run in the list"
     first = data["items"][0]
-    assert "jobs_found" in first
-    assert "steps" in first
-    assert "error_details" in first
+    assert isinstance(first["jobs_found"], int)
+    assert isinstance(first["steps"], list)
+    assert first.get("error_details") is None or isinstance(first["error_details"], dict)
