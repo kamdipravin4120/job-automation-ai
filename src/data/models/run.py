@@ -24,4 +24,5 @@ class Run(Base):
     error_details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     steps: Mapped[list | None] = mapped_column(JSONB, default=list)
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
+    jobs_found: Mapped[int] = mapped_column(Integer, default=0)
     next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

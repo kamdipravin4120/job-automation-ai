@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.run import Run
@@ -59,3 +59,8 @@ class RunsRepository:
 
     async def get_by_id(self, run_id) -> Run | None:
         return await self.session.get(Run, run_id)
+
+    async def set_jobs_found(self, run_id, count: int) -> None:
+        await self.session.execute(
+            update(Run).where(Run.id == run_id).values(jobs_found=count)
+        )
