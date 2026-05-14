@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jobai.companion.auth.*
+import com.jobai.companion.dlq.DlqScreen
 import com.jobai.companion.home.HomeScreen
 import com.jobai.companion.jobs.JobsScreen
 import com.jobai.companion.runs.RunsScreen
@@ -29,6 +30,7 @@ sealed class Screen(val route: String) {
     object Tracker : Screen("tracker")
     object Runs : Screen("runs")
     object More : Screen("more")
+    object Dlq : Screen("dlq")
 }
 
 @Composable
@@ -128,6 +130,9 @@ fun AppNavigation(
             composable(Screen.Runs.route) { RunsScreen() }
             composable(Screen.More.route) {
                 Text("Settings coming in SP3")
+            }
+            composable(Screen.Dlq.route) {
+                DlqScreen(onBack = { navController.popBackStack() })
             }
         }
     }
