@@ -47,7 +47,19 @@ def _build_push_service():
 def _push_on_complete(stage: str, result: dict) -> None:
     """Fire a push notification after a pipeline stage completes. Never raises."""
     try:
+        from src.data.db import get_sessionmaker
+        from src.data.repositories.fcm_tokens import FcmTokensRepository
         from src.notifications.push import PushEvent
+
+        async def _get_tokens() -> list[str]:
+            maker = get_sessionmaker()
+            async with maker() as session:
+                repo = FcmTokensRepository(session)
+                rows = await repo.list_all()
+                return [r.token for r in rows]
+
+        tokens = _run_async(_get_tokens)
+
         svc = _build_push_service()
         body_parts = [f"Stage: {stage}"]
         for k, v in list(result.items())[:2]:
@@ -56,7 +68,7 @@ def _push_on_complete(stage: str, result: dict) -> None:
             title=f"Pipeline: {stage} complete",
             body=" | ".join(body_parts),
             data=result,
-        ))
+        ), tokens=tokens)
     except Exception:
         log.debug("Push notification skipped (not configured or error)", exc_info=True)
 

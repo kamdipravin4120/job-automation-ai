@@ -32,7 +32,7 @@ def test_send_event_calls_available_backends(monkeypatch):
     svc = PushService(ntfy_topic_url="https://ntfy.sh/t")
     called = []
     monkeypatch.setattr(svc, "send_ntfy", lambda ev: called.append("ntfy"))
-    monkeypatch.setattr(svc, "send_fcm_all", lambda ev: called.append("fcm"))
+    monkeypatch.setattr(svc, "send_fcm_all", lambda ev, **kw: called.append("fcm"))
     svc.send_event(PushEvent(title="T", body="B"))
     assert "ntfy" in called
     assert "fcm" in called

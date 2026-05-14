@@ -36,9 +36,9 @@ class PushService:
     def unregister_fcm_token(self, token: str) -> None:
         self._fcm_tokens = [t for t in self._fcm_tokens if t != token]
 
-    def send_event(self, event: PushEvent) -> None:
+    def send_event(self, event: PushEvent, tokens: list[str] | None = None) -> None:
         self.send_ntfy(event)
-        self.send_fcm_all(event)
+        self.send_fcm_all(event, tokens=tokens or [])
 
     def send_ntfy(self, event: PushEvent) -> None:
         if not self.ntfy_topic_url:
@@ -58,10 +58,11 @@ class PushService:
         except Exception as exc:
             log.warning("ntfy push failed: %s", exc)
 
-    def send_fcm_all(self, event: PushEvent) -> None:
-        if not self._fcm_tokens or not self.fcm_project_id:
+    def send_fcm_all(self, event: PushEvent, tokens: list[str] | None = None) -> None:
+        effective_tokens = tokens if tokens is not None else self._fcm_tokens
+        if not effective_tokens or not self.fcm_project_id:
             return
-        for token in list(self._fcm_tokens):
+        for token in list(effective_tokens):
             try:
                 self._send_fcm_one(token, event)
             except Exception as exc:
