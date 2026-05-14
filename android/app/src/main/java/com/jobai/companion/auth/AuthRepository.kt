@@ -1,10 +1,13 @@
 package com.jobai.companion.auth
 
+import com.google.firebase.messaging.FirebaseMessaging
 import com.jobai.companion.core.api.ChallengeRequest
+import com.jobai.companion.core.api.FcmRegisterRequest
 import com.jobai.companion.core.api.JobAiService
 import com.jobai.companion.core.api.PairRequest
 import com.jobai.companion.core.auth.KeystoreHelper
 import com.jobai.companion.core.auth.SessionStore
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,6 +34,11 @@ class AuthRepository @Inject constructor(
         sessionStore.sessionToken = pairResp.sessionToken
         sessionStore.deviceId = pairResp.deviceId
         sessionStore.serverUrl = serverUrl
+
+        runCatching {
+            val fcmToken = FirebaseMessaging.getInstance().token.await()
+            api.registerFcmToken(FcmRegisterRequest(token = fcmToken, deviceId = pairResp.deviceId))
+        }
 
         PairResult.Success(pairResp.deviceId)
     }.getOrElse { e ->
