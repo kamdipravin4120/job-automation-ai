@@ -18,6 +18,7 @@ import com.jobai.companion.dlq.DlqScreen
 import com.jobai.companion.home.HomeScreen
 import com.jobai.companion.jobs.JobsScreen
 import com.jobai.companion.runs.RunsScreen
+import com.jobai.companion.settings.SettingsScreen
 import com.jobai.companion.tracker.TrackerScreen
 
 sealed class Screen(val route: String) {
@@ -129,7 +130,13 @@ fun AppNavigation(
             composable(Screen.Tracker.route) { TrackerScreen() }
             composable(Screen.Runs.route) { RunsScreen() }
             composable(Screen.More.route) {
-                Text("Settings coming in SP3")
+                SettingsScreen(
+                    onUnpaired = {
+                        navController.navigate(Screen.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(Screen.Dlq.route) {
                 DlqScreen(onBack = { navController.popBackStack() })
