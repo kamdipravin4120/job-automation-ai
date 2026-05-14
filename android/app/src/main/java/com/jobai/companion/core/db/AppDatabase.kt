@@ -1,9 +1,7 @@
 package com.jobai.companion.core.db
 
-import androidx.room.Database
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.RoomDatabase
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "jobs")
 data class JobEntity(
@@ -44,13 +42,39 @@ data class RunEntity(
     val syncedAt: Long,
 )
 
+@Entity(tableName = "dlq_items")
+data class DlqEntity(
+    @PrimaryKey val id: String,
+    val kind: String,
+    val correlationId: String,
+    val status: String,
+    val errorCode: String?,
+    val retryCount: Int,
+    val startedAt: Long?,
+    val finishedAt: Long?,
+    val syncedAt: Long,
+)
+
+@Dao
+interface DlqDao {
+    @Query("SELECT * FROM dlq_items ORDER BY startedAt DESC")
+    fun observeAll(): Flow<List<DlqEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(items: List<DlqEntity>)
+
+    @Query("DELETE FROM dlq_items WHERE id = :id")
+    suspend fun delete(id: String)
+}
+
 @Database(
-    entities = [JobEntity::class, ApplicationEntity::class, RunEntity::class],
-    version = 1,
+    entities = [JobEntity::class, ApplicationEntity::class, RunEntity::class, DlqEntity::class],
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun applicationDao(): ApplicationDao
     abstract fun runDao(): RunDao
+    abstract fun dlqDao(): DlqDao
 }
