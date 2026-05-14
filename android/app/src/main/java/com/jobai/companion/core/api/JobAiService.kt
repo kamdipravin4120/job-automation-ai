@@ -155,16 +155,16 @@ interface JobAiService {
         @Query("per_page") perPage: Int = 100,
     ): PaginatedApplications
 
-    @GET("pipeline/runs")
+    @GET("runs")
     suspend fun listRuns(
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 20,
     ): PaginatedRuns
 
-    @GET("pipeline/runs/{id}")
+    @GET("runs/{id}")
     suspend fun getRunDetail(@Path("id") id: String): RunDto
 
-    @POST("pipeline/runs")
+    @POST("runs")
     suspend fun triggerRun(): TriggerRunResponse
 
     @GET("dlq")
