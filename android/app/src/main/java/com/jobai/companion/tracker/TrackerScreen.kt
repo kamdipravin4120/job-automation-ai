@@ -1,6 +1,7 @@
 package com.jobai.companion.tracker
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,7 +21,10 @@ import java.time.format.DateTimeFormatter
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d").withZone(ZoneId.systemDefault())
 
 @Composable
-fun TrackerScreen(vm: TrackerViewModel = hiltViewModel()) {
+fun TrackerScreen(
+    onAppClick: (Application) -> Unit = {},
+    vm: TrackerViewModel = hiltViewModel(),
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().background(Background)) {
@@ -52,7 +56,9 @@ fun TrackerScreen(vm: TrackerViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(state.applications, key = { it.id }) { app ->
-                ApplicationCard(app)
+                Box(Modifier.clickable { onAppClick(app) }) {
+                    ApplicationCard(app)
+                }
             }
         }
     }

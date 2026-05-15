@@ -9,16 +9,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.jobai.companion.auth.*
 import com.jobai.companion.dlq.DlqScreen
 import com.jobai.companion.home.HomeScreen
+import com.jobai.companion.jobs.JobDetailScreen
 import com.jobai.companion.jobs.JobsScreen
 import com.jobai.companion.runs.RunsScreen
 import com.jobai.companion.settings.SettingsScreen
+import com.jobai.companion.tracker.ApplicationDetailScreen
 import com.jobai.companion.tracker.TrackerScreen
 
 sealed class Screen(val route: String) {
@@ -32,6 +36,16 @@ sealed class Screen(val route: String) {
     object Runs : Screen("runs")
     object More : Screen("more")
     object Dlq : Screen("dlq")
+
+    object JobDetail : Screen("job_detail/{jobId}/{title}/{company}") {
+        fun route(jobId: String, title: String, company: String) =
+            "job_detail/${jobId}/${android.net.Uri.encode(title)}/${android.net.Uri.encode(company)}"
+    }
+
+    object AppDetail : Screen("app_detail/{appId}/{title}/{status}") {
+        fun route(appId: String, title: String, status: String) =
+            "app_detail/${appId}/${android.net.Uri.encode(title)}/${android.net.Uri.encode(status)}"
+    }
 }
 
 @Composable
@@ -126,8 +140,22 @@ fun AppNavigation(
                 )
             }
             composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Jobs.route) { JobsScreen() }
-            composable(Screen.Tracker.route) { TrackerScreen() }
+            composable(Screen.Jobs.route) {
+                JobsScreen(
+                    onJobClick = { job ->
+                        navController.navigate(Screen.JobDetail.route(job.id, job.title, job.company))
+                    }
+                )
+            }
+            composable(Screen.Tracker.route) {
+                TrackerScreen(
+                    onAppClick = { app ->
+                        navController.navigate(
+                            Screen.AppDetail.route(app.id, app.jobTitle.ifBlank { "Application" }, app.currentStatus)
+                        )
+                    }
+                )
+            }
             composable(Screen.Runs.route) {
                 RunsScreen(onOpenDlq = { navController.navigate(Screen.Dlq.route) })
             }
@@ -142,6 +170,28 @@ fun AppNavigation(
             }
             composable(Screen.Dlq.route) {
                 DlqScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(
+                Screen.JobDetail.route,
+                arguments = listOf(
+                    navArgument("jobId") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType },
+                    navArgument("company") { type = NavType.StringType },
+                )
+            ) {
+                JobDetailScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(
+                Screen.AppDetail.route,
+                arguments = listOf(
+                    navArgument("appId") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType },
+                    navArgument("status") { type = NavType.StringType },
+                )
+            ) {
+                ApplicationDetailScreen(onBack = { navController.popBackStack() })
             }
         }
     }

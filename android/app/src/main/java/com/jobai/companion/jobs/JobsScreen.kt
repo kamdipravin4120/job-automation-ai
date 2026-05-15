@@ -1,6 +1,7 @@
 package com.jobai.companion.jobs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,11 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jobai.companion.core.model.Job
 import com.jobai.companion.core.ui.components.JobCard
 import com.jobai.companion.core.ui.theme.*
 
 @Composable
-fun JobsScreen(vm: JobsViewModel = hiltViewModel()) {
+fun JobsScreen(
+    onJobClick: (Job) -> Unit = {},
+    vm: JobsViewModel = hiltViewModel(),
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().background(Background)) {
@@ -45,11 +50,13 @@ fun JobsScreen(vm: JobsViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(state.jobs, key = { it.id }) { job ->
-                    JobCard(
-                        job = job,
-                        onStar = { vm.star(job.id) },
-                        onDismiss = { vm.dismiss(job.id) },
-                    )
+                    Box(Modifier.clickable { onJobClick(job) }) {
+                        JobCard(
+                            job = job,
+                            onStar = { vm.star(job.id) },
+                            onDismiss = { vm.dismiss(job.id) },
+                        )
+                    }
                 }
             }
         }
