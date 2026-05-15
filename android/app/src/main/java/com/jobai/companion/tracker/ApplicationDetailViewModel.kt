@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jobai.companion.core.api.BriefingItemDto
 import com.jobai.companion.core.api.JobAiService
+import com.jobai.companion.core.api.RecruiterDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,9 @@ data class AppDetailUiState(
     val appId: String = "",
     val title: String = "",
     val currentStatus: String = "",
+    val recruiter: RecruiterDto? = null,
+    val emailStatus: String? = null,
+    val lastContactAt: String? = null,
     val briefingItems: List<BriefingItemDto> = emptyList(),
     val isLoading: Boolean = true,
     val isGenerating: Boolean = false,
@@ -50,6 +54,9 @@ class ApplicationDetailViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             briefingItems = dto.briefingJson ?: emptyList(),
+                            recruiter = dto.recruiter,
+                            emailStatus = dto.emailStatus,
+                            lastContactAt = dto.lastContactAt,
                             isLoading = false,
                         )
                     }

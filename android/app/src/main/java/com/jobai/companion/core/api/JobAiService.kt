@@ -57,13 +57,25 @@ data class BriefingItemDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class RecruiterDto(
+    val name: String? = null,
+    val email: String? = null,
+    val company: String? = null,
+)
+
+@JsonClass(generateAdapter = true)
 data class ApplicationDto(
     val id: String,
     @Json(name = "job_id") val jobId: String,
+    @Json(name = "job_title") val jobTitle: String = "",
+    @Json(name = "job_company") val jobCompany: String = "",
     val channel: String,
     @Json(name = "current_status") val currentStatus: String,
     @Json(name = "submitted_at") val submittedAt: String,
     @Json(name = "external_ref") val externalRef: String?,
+    val recruiter: RecruiterDto? = null,
+    @Json(name = "email_status") val emailStatus: String? = null,
+    @Json(name = "last_contact_at") val lastContactAt: String? = null,
     @Json(name = "briefing_json") val briefingJson: List<BriefingItemDto>? = null,
 )
 
@@ -190,6 +202,9 @@ interface JobAiService {
 
     @POST("jobs/{id}/tailor")
     suspend fun triggerTailor(@Path("id") id: String): TailorQueuedDto
+
+    @GET("applications/follow-ups")
+    suspend fun listFollowUps(): List<ApplicationDto>
 
     @GET("applications/{id}")
     suspend fun getApplication(@Path("id") id: String): ApplicationDto

@@ -1,6 +1,8 @@
 package com.jobai.companion.core.db
 
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "jobs")
@@ -29,6 +31,11 @@ data class ApplicationEntity(
     val submittedAt: Long,
     val externalRef: String?,
     val syncedAt: Long,
+    val recruiterName: String? = null,
+    val recruiterEmail: String? = null,
+    val recruiterCompany: String? = null,
+    val emailStatus: String? = null,
+    val lastContactAt: Long? = null,
 )
 
 @Entity(tableName = "runs")
@@ -67,9 +74,19 @@ interface DlqDao {
     suspend fun delete(id: String)
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE applications ADD COLUMN recruiterName TEXT")
+        db.execSQL("ALTER TABLE applications ADD COLUMN recruiterEmail TEXT")
+        db.execSQL("ALTER TABLE applications ADD COLUMN recruiterCompany TEXT")
+        db.execSQL("ALTER TABLE applications ADD COLUMN emailStatus TEXT")
+        db.execSQL("ALTER TABLE applications ADD COLUMN lastContactAt INTEGER")
+    }
+}
+
 @Database(
     entities = [JobEntity::class, ApplicationEntity::class, RunEntity::class, DlqEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

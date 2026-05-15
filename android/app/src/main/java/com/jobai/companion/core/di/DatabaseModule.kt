@@ -8,6 +8,7 @@ import com.jobai.companion.core.db.AppDatabase
 import com.jobai.companion.core.db.ApplicationDao
 import com.jobai.companion.core.db.DlqDao
 import com.jobai.companion.core.db.JobDao
+import com.jobai.companion.core.db.MIGRATION_2_3
 import com.jobai.companion.core.db.RunDao
 import dagger.Module
 import dagger.Provides
@@ -41,7 +42,7 @@ object DatabaseModule {
     @Provides @Singleton
     fun provideDatabase(@ApplicationContext ctx: Context): AppDatabase =
         Room.databaseBuilder(ctx, AppDatabase::class.java, "jobai.db")
-            .addMigrations(migration_1_2)
+            .addMigrations(migration_1_2, MIGRATION_2_3)
             .build()
 
     @Provides fun provideJobDao(db: AppDatabase): JobDao = db.jobDao()

@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,7 +79,21 @@ private fun ApplicationCard(app: Application) {
                 Text(app.jobTitle.ifBlank { "Job ${app.jobId.take(8)}" }, style = AppTypography.titleMedium, color = TextPrimary)
                 Text(app.company.ifBlank { app.channel }, style = AppTypography.bodyMedium, color = TextMuted)
                 Spacer(Modifier.height(4.dp))
-                StatusBadge(app.currentStatus)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    StatusBadge(app.currentStatus)
+                    if (app.emailStatus == "follow_up_needed") {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFFF6B35), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        ) {
+                            Text("Follow Up", style = AppTypography.labelSmall, color = Color.White)
+                        }
+                    }
+                }
             }
             Text(
                 dateFormatter.format(app.submittedAt),

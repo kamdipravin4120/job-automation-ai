@@ -21,3 +21,5 @@ class Application(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     briefing_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     email_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_contact_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_follow_up_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

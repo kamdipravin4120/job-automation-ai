@@ -11,6 +11,8 @@ from src.api.core.deps import get_current_device
 from src.api.schemas.applications import ApplicationOut
 from src.api.schemas.common import PaginatedResponse
 from src.data.db import get_sessionmaker
+from src.data.models.application import Application
+from src.data.models.job import Job
 from src.data.repositories.applications import ApplicationsRepository
 
 router = APIRouter()
@@ -22,6 +24,30 @@ async def _get_db():
         yield session
 
 
+def _to_out(app: Application, job: Job | None) -> ApplicationOut:
+    return ApplicationOut.model_validate({
+        "id": app.id,
+        "job_id": app.job_id,
+        "job_title": job.title if job else "",
+        "job_company": job.company if job else "",
+        "channel": app.channel,
+        "current_status": app.current_status,
+        "submitted_at": app.submitted_at,
+        "external_ref": app.external_ref,
+        "recruiter": app.recruiter,
+        "email_status": app.email_status,
+        "last_contact_at": app.last_contact_at,
+        "next_follow_up_at": app.next_follow_up_at,
+        "briefing_json": app.briefing_json,
+    })
+
+
+@router.get("/follow-ups", response_model=list[ApplicationOut])
+async def list_follow_ups(_device=Depends(get_current_device), db=Depends(_get_db)):
+    rows = await ApplicationsRepository(db).list_follow_ups()
+    return [_to_out(app, job) for app, job in rows]
+
+
 @router.get("", response_model=PaginatedResponse[ApplicationOut])
 async def list_applications(
     page: int = Query(1, ge=1),
@@ -31,7 +57,8 @@ async def list_applications(
     db=Depends(_get_db),
 ):
     repo = ApplicationsRepository(db)
-    items, total = await repo.list_paginated(page=page, per_page=per_page, status=status)
+    rows, total = await repo.list_paginated_with_jobs(page=page, per_page=per_page, status=status)
+    items = [_to_out(app, job) for app, job in rows]
     return PaginatedResponse(items=items, total=total, page=page, per_page=per_page,
                              has_next=(page * per_page) < total)
 
@@ -40,10 +67,10 @@ async def list_applications(
 async def get_application(
     app_id: uuid.UUID, _device=Depends(get_current_device), db=Depends(_get_db),
 ):
-    app = await ApplicationsRepository(db).get_by_id(app_id)
-    if not app:
+    row = await ApplicationsRepository(db).get_by_id_with_job(app_id)
+    if not row:
         raise HTTPException(404, "Application not found")
-    return app
+    return _to_out(row[0], row[1])
 
 
 @router.post("/{app_id}/brief", response_model=ApplicationOut)
@@ -56,21 +83,20 @@ async def generate_brief(
     from src.observability.logging import get_logger
     from src.resume.engine import ResumeService
     from src.utils.config import load_config
-    from src.data.repositories.jobs import JobsRepository
 
-    app = await ApplicationsRepository(db).get_by_id(app_id)
-    if not app:
+    row = await ApplicationsRepository(db).get_by_id_with_job(app_id)
+    if not row:
         raise HTTPException(404, "Application not found")
+    app, job_row = row
 
     if app.briefing_json is not None:
-        return app
+        return _to_out(app, job_row)
 
     config = load_config(Path("config.yaml"))
     profile_path = Path(config.app.profile_path)
     if not profile_path.exists():
         raise HTTPException(422, detail="Resume not configured")
 
-    job_row = await JobsRepository(db).get_by_id(app.job_id)
     if not job_row:
         raise HTTPException(404, "Job not found")
 
@@ -95,4 +121,4 @@ async def generate_brief(
     app.briefing_json = json.dumps(briefing)
     await db.commit()
     await db.refresh(app)
-    return app
+    return _to_out(app, job_row)

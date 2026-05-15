@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -82,21 +83,34 @@ def _cmd_bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _find_free_port(start: int = 8000, end: int = 9000) -> int:
+    for port in range(start, end):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("", port))
+                return port
+            except OSError:
+                continue
+    raise RuntimeError(f"No free port found in range {start}-{end}")
+
+
 def _register_serve(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser("serve", help="Start the FastAPI server via uvicorn.")
     p.add_argument("--host", default="0.0.0.0")
-    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--port", type=int, default=None, help="Port to listen on (default: auto-detect free port starting at 8000)")
     p.add_argument("--reload", action="store_true")
     p.set_defaults(func=_cmd_serve)
 
 
 def _cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
+    port = args.port if args.port is not None else _find_free_port()
+    print(f"Starting server on {args.host}:{port}")
     uvicorn.run(
         "src.api.app:create_app",
         factory=True,
         host=args.host,
-        port=args.port,
+        port=port,
         reload=args.reload,
     )
     return 0

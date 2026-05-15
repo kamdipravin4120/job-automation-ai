@@ -16,13 +16,19 @@ class BriefingItem(BaseModel):
 class ApplicationOut(BaseModel):
     id: uuid.UUID
     job_id: uuid.UUID
+    job_title: str = ""
+    job_company: str = ""
     channel: str
     current_status: str
     submitted_at: datetime
     external_ref: str | None
+    recruiter: dict | None = None
+    email_status: str | None = None
+    last_contact_at: datetime | None = None
+    next_follow_up_at: datetime | None = None
     briefing_json: list[BriefingItem] | None = None
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": False}
 
     @field_validator("briefing_json", mode="before")
     @classmethod

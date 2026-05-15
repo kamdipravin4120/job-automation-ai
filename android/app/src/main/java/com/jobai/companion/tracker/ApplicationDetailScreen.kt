@@ -34,10 +34,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jobai.companion.core.api.BriefingItemDto
+import com.jobai.companion.core.api.RecruiterDto
 import com.jobai.companion.core.ui.components.StatusBadge
 import com.jobai.companion.core.ui.theme.AppTypography
 import com.jobai.companion.core.ui.theme.Background
@@ -88,7 +90,30 @@ fun ApplicationDetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item { StatusBadge(state.currentStatus) }
+                item {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        StatusBadge(state.currentStatus)
+                        if (state.emailStatus == "follow_up_needed") {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFFFF6B35), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                            ) {
+                                Text(
+                                    "Follow Up",
+                                    style = AppTypography.labelSmall,
+                                    color = Color.White,
+                                )
+                            }
+                        }
+                    }
+                }
+                state.recruiter?.let { recruiter ->
+                    item { RecruiterCard(recruiter, state.lastContactAt) }
+                }
                 item {
                     Text("Interview Prep", style = AppTypography.titleMedium, color = TextPrimary)
                 }
@@ -126,6 +151,36 @@ fun ApplicationDetailScreen(
                         Text(it, color = MaterialTheme.colorScheme.error, style = AppTypography.bodySmall)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecruiterCard(recruiter: RecruiterDto, lastContactAt: String?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text("Recruiter", style = AppTypography.titleSmall, color = TextPrimary)
+            recruiter.name?.let {
+                Text(it, style = AppTypography.bodyMedium, color = TextPrimary)
+            }
+            recruiter.email?.let {
+                Text(it, style = AppTypography.bodySmall, color = TextMuted)
+            }
+            recruiter.company?.let {
+                Text(it, style = AppTypography.bodySmall, color = TextMuted)
+            }
+            lastContactAt?.let {
+                val date = it.substringBefore("T")
+                Text("Last contact: $date", style = AppTypography.labelSmall, color = TextMuted)
             }
         }
     }
