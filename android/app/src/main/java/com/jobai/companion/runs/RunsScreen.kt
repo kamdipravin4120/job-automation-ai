@@ -1,6 +1,7 @@
 package com.jobai.companion.runs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +23,10 @@ import java.time.format.DateTimeFormatter
 private val runDateFmt = DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault())
 
 @Composable
-fun RunsScreen(vm: RunsViewModel = hiltViewModel()) {
+fun RunsScreen(
+    onOpenDlq: () -> Unit,
+    vm: RunsViewModel = hiltViewModel(),
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
     Box(Modifier.fillMaxSize().background(Background)) {
@@ -39,35 +43,75 @@ fun RunsScreen(vm: RunsViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(state.runs, key = { it.id }) { run ->
-                    RunRow(run)
+                    RunRow(
+                        run = run,
+                        isExpanded = state.selectedRunId == run.id,
+                        errorCode = if (state.selectedRunId == run.id) state.selectedDetail?.errorCode else null,
+                        onTap = { vm.toggleDetail(run.id) },
+                    )
                 }
             }
         }
 
-        FloatingActionButton(
-            onClick = { vm.triggerRun() },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            containerColor = Primary,
+        Column(
+            Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.End,
         ) {
-            Text(if (state.triggerPending) "…" else "▶", color = Color.White)
+            SmallFloatingActionButton(
+                onClick = onOpenDlq,
+                containerColor = ScoreLow,
+            ) { Text("!", color = Color.White, style = AppTypography.titleMedium) }
+            FloatingActionButton(
+                onClick = { vm.triggerRun() },
+                containerColor = Primary,
+            ) {
+                Text(if (state.triggerPending) "…" else "▶", color = Color.White)
+            }
         }
     }
 }
 
 @Composable
-private fun RunRow(run: Run) {
+private fun RunRow(run: Run, isExpanded: Boolean, errorCode: String?, onTap: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().clickable(onClick = onTap),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(run.kind.replaceFirstChar { it.uppercase() }, style = AppTypography.titleMedium, color = TextPrimary)
-                Text(runDateFmt.format(run.startedAt), style = AppTypography.bodyMedium, color = TextMuted)
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(run.kind.replaceFirstChar { it.uppercase() }, style = AppTypography.titleMedium, color = TextPrimary)
+                    Text(runDateFmt.format(run.startedAt), style = AppTypography.bodyMedium, color = TextMuted)
+                }
+                if (run.jobsFound > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = PrimarySurface,
+                        modifier = Modifier.padding(end = 8.dp),
+                    ) {
+                        Text(
+                            "${run.jobsFound} jobs",
+                            style = AppTypography.labelSmall,
+                            color = Primary,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                StatusBadge(run.status)
             }
-            StatusBadge(run.status)
+            if (isExpanded) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = Border)
+                Spacer(Modifier.height(8.dp))
+                if (errorCode != null) {
+                    Text("Error: $errorCode", style = AppTypography.bodySmall, color = ScoreLow)
+                } else {
+                    Text("No error details", style = AppTypography.bodySmall, color = TextDisabled)
+                }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.jobai.companion.runs
 
 import com.jobai.companion.core.api.JobAiService
+import com.jobai.companion.core.api.RunDto
 import com.jobai.companion.core.db.RunDao
 import com.jobai.companion.core.db.RunEntity
 import com.jobai.companion.core.model.Run
@@ -30,19 +31,22 @@ class RunsRepository @Inject constructor(
 
     suspend fun sync() {
         val now = System.currentTimeMillis()
-        val runs = api.listRuns(perPage = 20)
-        runDao.upsertAll(runs.map { dto ->
+        val resp = api.listRuns(perPage = 20)
+        runDao.upsertAll(resp.items.map { dto ->
             RunEntity(
                 id = dto.id,
                 kind = dto.kind,
                 status = dto.status,
                 startedAt = Instant.parse(dto.startedAt).toEpochMilli(),
                 finishedAt = dto.finishedAt?.let { Instant.parse(it).toEpochMilli() },
-                jobsFound = 0, // not exposed in RunOut yet — SP3 to enrich
+                jobsFound = dto.jobsFound,
                 syncedAt = now,
             )
         })
     }
 
     suspend fun triggerRun() = api.triggerRun()
+
+    suspend fun getRunDetail(id: String): RunDto? =
+        runCatching { api.getRunDetail(id) }.getOrNull()
 }

@@ -128,7 +128,9 @@ fun AppNavigation(
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Jobs.route) { JobsScreen() }
             composable(Screen.Tracker.route) { TrackerScreen() }
-            composable(Screen.Runs.route) { RunsScreen() }
+            composable(Screen.Runs.route) {
+                RunsScreen(onOpenDlq = { navController.navigate(Screen.Dlq.route) })
+            }
             composable(Screen.More.route) {
                 SettingsScreen(
                     onUnpaired = {
