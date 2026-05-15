@@ -44,6 +44,11 @@ val AppTypography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 15.sp,
     ),
+    titleSmall = TextStyle(
+        fontFamily = InterFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+    ),
     bodyLarge = TextStyle(
         fontFamily = InterFamily,
         fontWeight = FontWeight.Normal,
@@ -55,6 +60,12 @@ val AppTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp,
+    ),
+    bodySmall = TextStyle(
+        fontFamily = InterFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = InterFamily,
