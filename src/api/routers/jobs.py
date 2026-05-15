@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.api.core.deps import get_current_device
 from src.api.schemas.common import PaginatedResponse
-from src.api.schemas.jobs import JobOut
+from src.api.schemas.jobs import ArtifactsOut, JobOut
 from src.data.db import get_sessionmaker
 from src.data.models.job import Job
+from src.data.repositories.job_artifacts import JobArtifactsRepository
 from src.data.repositories.jobs import JobsRepository
 
 router = APIRouter()
@@ -86,3 +87,19 @@ async def dismiss_job(
     except Exception:
         pass
     return JobOut.model_validate(job)
+
+
+@router.get("/{job_id}/artifacts", response_model=ArtifactsOut)
+async def get_job_artifacts(
+    job_id: uuid.UUID,
+    _device=Depends(get_current_device),
+    db=Depends(_get_db),
+):
+    repo = JobArtifactsRepository(db)
+    cover = await repo.get_latest(job_id, "cover_letter")
+    resume_art = await repo.get_latest(job_id, "resume_text")
+    return ArtifactsOut(
+        cover_letter=cover.text if cover else None,
+        resume_text=resume_art.text if resume_art else None,
+        generated_at=cover.generated_at if cover else None,
+    )

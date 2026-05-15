@@ -20,3 +20,9 @@ class JobOut(BaseModel):
     dismissed: bool
 
     model_config = {"from_attributes": True}
+
+
+class ArtifactsOut(BaseModel):
+    cover_letter: str | None = None
+    resume_text: str | None = None
+    generated_at: datetime | None = None
