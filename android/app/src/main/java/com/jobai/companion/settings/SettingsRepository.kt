@@ -1,11 +1,8 @@
 package com.jobai.companion.settings
 
 import com.jobai.companion.auth.AuthRepository
-import com.jobai.companion.core.api.FcmRegisterRequest
 import com.jobai.companion.core.api.JobAiService
 import com.jobai.companion.core.auth.SessionStore
-import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,12 +20,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun unpair() {
         val deviceId = sessionStore.deviceId
-        runCatching {
-            val token = FirebaseMessaging.getInstance().token.await()
-            if (deviceId != null) {
-                api.registerFcmToken(FcmRegisterRequest(token = token, deviceId = deviceId))
-            }
-        }
         if (deviceId != null) runCatching { api.deleteDevice(deviceId) }
         authRepository.unpair()
     }
