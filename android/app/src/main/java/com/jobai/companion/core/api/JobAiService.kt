@@ -50,6 +50,13 @@ data class PaginatedJobs(
 
 // ─── Application DTOs ────────────────────────────────────────
 @JsonClass(generateAdapter = true)
+data class BriefingItemDto(
+    val question: String,
+    val rationale: String,
+    @Json(name = "star_points") val starPoints: List<String>,
+)
+
+@JsonClass(generateAdapter = true)
 data class ApplicationDto(
     val id: String,
     @Json(name = "job_id") val jobId: String,
@@ -57,6 +64,7 @@ data class ApplicationDto(
     @Json(name = "current_status") val currentStatus: String,
     @Json(name = "submitted_at") val submittedAt: String,
     @Json(name = "external_ref") val externalRef: String?,
+    @Json(name = "briefing_json") val briefingJson: List<BriefingItemDto>? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -129,6 +137,16 @@ data class FcmRegisterOut(val registered: Boolean)
 @JsonClass(generateAdapter = true)
 data class DlqActionOut(val queued: Boolean? = null, val dismissed: Boolean? = null)
 
+@JsonClass(generateAdapter = true)
+data class ArtifactsDto(
+    @Json(name = "cover_letter") val coverLetter: String?,
+    @Json(name = "resume_text") val resumeText: String?,
+    @Json(name = "generated_at") val generatedAt: String?,
+)
+
+@JsonClass(generateAdapter = true)
+data class TailorQueuedDto(val queued: Boolean)
+
 // ─── Service interface ────────────────────────────────────────
 interface JobAiService {
     @POST("auth/challenge")
@@ -166,6 +184,18 @@ interface JobAiService {
 
     @POST("runs")
     suspend fun triggerRun(): TriggerRunResponse
+
+    @GET("jobs/{id}/artifacts")
+    suspend fun getArtifacts(@Path("id") id: String): ArtifactsDto
+
+    @POST("jobs/{id}/tailor")
+    suspend fun triggerTailor(@Path("id") id: String): TailorQueuedDto
+
+    @GET("applications/{id}")
+    suspend fun getApplication(@Path("id") id: String): ApplicationDto
+
+    @POST("applications/{id}/brief")
+    suspend fun generateBrief(@Path("id") id: String): ApplicationDto
 
     @GET("dlq")
     suspend fun listDlq(
