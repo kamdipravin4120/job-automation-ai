@@ -115,9 +115,8 @@ async def trigger_tailor(
     _device=Depends(get_current_device),
     db=Depends(_get_db),
 ):
-    import uuid as _uuid
     job = await db.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    run_tailor.delay(correlation_id=str(_uuid.uuid4()), job_id=str(job_id))
+    run_tailor.delay(correlation_id=str(uuid.uuid4()), job_id=str(job_id))
     return {"queued": True}

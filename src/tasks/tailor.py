@@ -51,7 +51,7 @@ def _tailor_for_job(correlation_id: str, job_id: str) -> dict:
     )
 
     service = ResumeService(config.resume, Path("."), log)
-    bundle, _ = service.build_assets(profile=profile, job=job_posting)
+    bundle, artifacts = service.build_assets(profile=profile, job=job_posting)
 
     async def _persist():
         from src.data.db import get_sessionmaker
@@ -63,11 +63,13 @@ def _tailor_for_job(correlation_id: str, job_id: str) -> dict:
                 job_id=_uuid.UUID(job_id),
                 kind="cover_letter",
                 text=bundle.cover_letter,
+                file_path=artifacts.cover_letter_path,
             )
             await repo.create(
                 job_id=_uuid.UUID(job_id),
                 kind="resume_text",
                 text=bundle.resume_text,
+                file_path=artifacts.resume_text_path,
             )
             await session.commit()
 
