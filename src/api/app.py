@@ -93,6 +93,9 @@ def create_app() -> FastAPI:
     app.include_router(audit_router,        prefix="/api/v1/audit",        tags=["audit"])
     app.include_router(selectors_router,    prefix="/api/v1/selectors",    tags=["selectors"])
 
+    from src.api.routers.searches import router as searches_router
+    app.include_router(searches_router, prefix="/api/v1/searches", tags=["searches"])
+
     from src.api.routers.gmail import router as gmail_router
     app.include_router(gmail_router)
 

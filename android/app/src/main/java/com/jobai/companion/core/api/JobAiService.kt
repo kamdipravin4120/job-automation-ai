@@ -159,6 +159,34 @@ data class ArtifactsDto(
 @JsonClass(generateAdapter = true)
 data class TailorQueuedDto(val queued: Boolean)
 
+// ─── Saved search DTOs ────────────────────────────────────────
+@JsonClass(generateAdapter = true)
+data class SavedSearchDto(
+    val id: String = "",
+    val keywords: String,
+    val location: String,
+    val sources: List<String> = emptyList(),
+    @Json(name = "min_match_score") val minMatchScore: Float = 0.6f,
+    val enabled: Boolean = true,
+    @Json(name = "run_every_hours") val runEveryHours: Int = 24,
+    @Json(name = "last_run_at") val lastRunAt: String? = null,
+    @Json(name = "next_run_at") val nextRunAt: String? = null,
+    @Json(name = "created_at") val createdAt: String = "",
+)
+
+@JsonClass(generateAdapter = true)
+data class SearchPatchDto(
+    val keywords: String? = null,
+    val location: String? = null,
+    val sources: List<String>? = null,
+    @Json(name = "min_match_score") val minMatchScore: Float? = null,
+    val enabled: Boolean? = null,
+    @Json(name = "run_every_hours") val runEveryHours: Int? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class TriggerSearchResponse(val queued: Boolean, @Json(name = "correlation_id") val correlationId: String)
+
 // ─── Service interface ────────────────────────────────────────
 interface JobAiService {
     @POST("auth/challenge")
@@ -232,4 +260,19 @@ interface JobAiService {
 
     @DELETE("devices/{deviceId}")
     suspend fun deleteDevice(@Path("deviceId") deviceId: String)
+
+    @GET("searches")
+    suspend fun listSearches(): List<SavedSearchDto>
+
+    @POST("searches")
+    suspend fun createSearch(@Body body: SavedSearchDto): SavedSearchDto
+
+    @PATCH("searches/{id}")
+    suspend fun updateSearch(@Path("id") id: String, @Body body: SearchPatchDto): SavedSearchDto
+
+    @DELETE("searches/{id}")
+    suspend fun deleteSearch(@Path("id") id: String)
+
+    @POST("searches/{id}/run")
+    suspend fun triggerSearch(@Path("id") id: String): TriggerSearchResponse
 }

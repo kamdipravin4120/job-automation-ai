@@ -19,4 +19,5 @@ from . import (  # noqa: E402, F401
     audit_log,
     fcm_token,
     config_version,
+    saved_search,
 )

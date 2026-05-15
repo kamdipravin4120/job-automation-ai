@@ -25,17 +25,24 @@ class ScraperService:
             "glassdoor": GlassdoorScraper
         }
 
-    def scrape(self) -> list[JobPosting]:
+    def scrape(
+        self,
+        queries: list | None = None,
+        sources: list[str] | None = None,
+    ) -> list[JobPosting]:
+        effective_queries = queries if queries is not None else self.config.search_queries
         jobs: list[JobPosting] = []
 
         for source_id, scraper_class in self._scraper_map.items():
+            if sources is not None and source_id not in sources:
+                continue
             source_config = getattr(self.config.scraper, source_id, None)
-            
+
             if source_config and source_config.enabled:
                 try:
                     self.logger.info("Starting %s scrape...", source_id.capitalize())
                     scraper = scraper_class(source_config, self.config_dir, self.logger)
-                    scraped = scraper.scrape(self.config.search_queries)
+                    scraped = scraper.scrape(effective_queries)
                     jobs.extend(scraped)
                     self.logger.info("Finished %s scrape. Found %s jobs.", source_id.capitalize(), len(scraped))
                 except Exception as exc:

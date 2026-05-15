@@ -16,6 +16,7 @@ celery_app = Celery(
         "src.tasks.match",
         "src.tasks.tailor",
         "src.tasks.apply",
+        "src.tasks.discovery",
     ],
 )
 
@@ -38,5 +39,12 @@ celery_app.conf.update(
         "src.tasks.match.*": {"queue": "ai"},
         "src.tasks.tailor.*": {"queue": "ai"},
         "src.tasks.apply.*": {"queue": "browser"},
+        "src.tasks.discovery.*": {"queue": "scrape"},
+    },
+    beat_schedule={
+        "run-due-searches": {
+            "task": "src.tasks.discovery.run_due_searches",
+            "schedule": 1800,  # every 30 minutes
+        },
     },
 )
