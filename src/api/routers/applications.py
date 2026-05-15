@@ -62,7 +62,7 @@ async def generate_brief(
     if not app:
         raise HTTPException(404, "Application not found")
 
-    if app.briefing_json:
+    if app.briefing_json is not None:
         return app
 
     config = load_config(Path("config.yaml"))
@@ -88,7 +88,7 @@ async def generate_brief(
     )
 
     service = ResumeService(config.resume, Path("."), get_logger("api.brief"))
-    briefing = await asyncio.get_event_loop().run_in_executor(
+    briefing = await asyncio.get_running_loop().run_in_executor(
         None, service.generate_interview_briefing, profile, job_posting
     )
 
