@@ -93,7 +93,7 @@ fun JobDetailScreen(
                     onGenerate = null,
                 )
                 state.error?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, style = AppTypography.bodyMedium)
+                    Text(it, color = MaterialTheme.colorScheme.error, style = AppTypography.bodySmall)
                 }
             }
         }
@@ -108,7 +108,7 @@ private fun ArtifactSection(
     onGenerate: (() -> Unit)?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = AppTypography.labelMedium, color = TextPrimary)
+        Text(title, style = AppTypography.titleSmall, color = TextPrimary)
         when {
             content != null -> Card(
                 shape = RoundedCornerShape(8.dp),
@@ -117,7 +117,7 @@ private fun ArtifactSection(
                 Text(
                     content,
                     modifier = Modifier.padding(12.dp),
-                    style = AppTypography.bodyMedium,
+                    style = AppTypography.bodySmall,
                     color = TextMuted,
                 )
             }
@@ -130,10 +130,10 @@ private fun ArtifactSection(
                     color = Primary,
                     strokeWidth = 2.dp,
                 )
-                Text("Generating…", style = AppTypography.bodyMedium, color = TextMuted)
+                Text("Generating…", style = AppTypography.bodySmall, color = TextMuted)
             }
             onGenerate != null -> Button(onClick = onGenerate) { Text("Generate") }
-            else -> Text("Not yet generated", style = AppTypography.bodyMedium, color = TextDisabled)
+            else -> Text("Not yet generated", style = AppTypography.bodySmall, color = TextDisabled)
         }
     }
 }
