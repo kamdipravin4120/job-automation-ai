@@ -67,7 +67,7 @@ def _push_on_complete(stage: str, result: dict) -> None:
         svc.send_event(PushEvent(
             title=f"Pipeline: {stage} complete",
             body=" | ".join(body_parts),
-            data=result,
+            data={"kind": stage, **result},
         ), tokens=tokens)
     except Exception:
         log.debug("Push notification skipped (not configured or error)", exc_info=True)
