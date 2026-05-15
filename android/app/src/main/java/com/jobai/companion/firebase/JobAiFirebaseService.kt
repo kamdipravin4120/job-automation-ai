@@ -32,6 +32,11 @@ class JobAiFirebaseService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        val kind = message.data["kind"]
+        val jobId = message.data["job_id"]
+        if (kind != null) {
+            FcmEventBus.emit(FcmEvent(kind = kind, jobId = jobId))
+        }
         val title = message.notification?.title ?: message.data["title"] ?: "JobAI"
         val body = message.notification?.body ?: message.data["body"] ?: ""
         showNotification(title, body)
