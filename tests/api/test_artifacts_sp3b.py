@@ -70,3 +70,24 @@ async def test_get_artifacts_returns_latest(async_client, redis_client, db_sessi
     assert data["cover_letter"] == "v2 cover"
     assert data["resume_text"] == "resume body"
     assert data["generated_at"] is not None
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_trigger_tailor_queues_task(async_client, redis_client, db_session):
+    from unittest.mock import patch
+    from src.data.models.job import Job
+    job = Job(source="test", source_id=str(uuid.uuid4()), title="Eng", company="Co",
+              jd_text="jd", url=None)
+    db_session.add(job)
+    await db_session.commit()
+
+    token = await _get_token(async_client, redis_client)
+    with patch("src.api.routers.jobs.run_tailor") as mock_task:
+        mock_task.delay.return_value = None
+        r = await async_client.post(
+            f"/api/v1/jobs/{job.id}/tailor",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    assert r.status_code == 200
+    assert r.json()["queued"] is True
+    mock_task.delay.assert_called_once()

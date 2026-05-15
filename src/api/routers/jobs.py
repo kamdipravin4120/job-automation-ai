@@ -11,6 +11,7 @@ from src.data.db import get_sessionmaker
 from src.data.models.job import Job
 from src.data.repositories.job_artifacts import JobArtifactsRepository
 from src.data.repositories.jobs import JobsRepository
+from src.tasks.tailor import run_tailor
 
 router = APIRouter()
 
@@ -106,3 +107,17 @@ async def get_job_artifacts(
         resume_text=resume_art.text if resume_art else None,
         generated_at=(cover or resume_art).generated_at if (cover or resume_art) else None,
     )
+
+
+@router.post("/{job_id}/tailor")
+async def trigger_tailor(
+    job_id: uuid.UUID,
+    _device=Depends(get_current_device),
+    db=Depends(_get_db),
+):
+    import uuid as _uuid
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    run_tailor.delay(correlation_id=str(_uuid.uuid4()), job_id=str(job_id))
+    return {"queued": True}
