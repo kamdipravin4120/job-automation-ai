@@ -95,11 +95,14 @@ async def get_job_artifacts(
     _device=Depends(get_current_device),
     db=Depends(_get_db),
 ):
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
     repo = JobArtifactsRepository(db)
     cover = await repo.get_latest(job_id, "cover_letter")
     resume_art = await repo.get_latest(job_id, "resume_text")
     return ArtifactsOut(
         cover_letter=cover.text if cover else None,
         resume_text=resume_art.text if resume_art else None,
-        generated_at=cover.generated_at if cover else None,
+        generated_at=(cover or resume_art).generated_at if (cover or resume_art) else None,
     )

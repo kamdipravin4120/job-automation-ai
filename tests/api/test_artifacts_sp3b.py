@@ -19,6 +19,16 @@ async def _get_token(async_client, redis_client) -> str:
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_get_artifacts_unknown_job_returns_404(async_client, redis_client):
+    token = await _get_token(async_client, redis_client)
+    r = await async_client.get(
+        f"/api/v1/jobs/{uuid.uuid4()}/artifacts",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_get_artifacts_empty(async_client, redis_client, db_session):
     from src.data.models.job import Job
     job = Job(source="test", source_id=str(uuid.uuid4()), title="Eng", company="Corp",
