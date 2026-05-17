@@ -38,26 +38,21 @@ def _parse_field(lines: list[str], prefix: str) -> str | None:
     return None
 
 
-def extract_recruiter(*, sender: str, subject: str, body: str, anthropic_client=None) -> RecruiterContact:
+def extract_recruiter(*, sender: str, subject: str, body: str, gemini_model=None) -> RecruiterContact:
     parsed_name, parsed_email = parseaddr(sender)
     name = parsed_name.strip() or None
     email = parsed_email.strip().lower() or None
 
     company: str | None = None
-    if anthropic_client is not None:
+    if gemini_model is not None:
         try:
             prompt = _COMPANY_PROMPT.format(
                 sender=sender[:200],
                 subject=subject[:200],
                 body=body[:1500],
             )
-            resp = anthropic_client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=60,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw = resp.content[0].text.strip()
-            lines = raw.splitlines()
+            resp = gemini_model.generate_content(prompt)
+            lines = resp.text.strip().splitlines()
             if not name:
                 name = _parse_field(lines, "NAME")
             if not email:

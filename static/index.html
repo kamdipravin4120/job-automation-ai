@@ -56,6 +56,14 @@
         INTEGRATIONS
       </a>
 
+      <a href="#/jobs" class="nav-link" data-route="jobs" aria-label="Jobs">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
+          <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
+        </svg>
+        JOBS
+      </a>
+
       <a href="#/runs" class="nav-link" data-route="runs" aria-label="Runs">
         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
@@ -90,6 +98,29 @@
           <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
         </svg>
         SELECTORS
+      </a>
+
+      <div class="oc-nav-sep"></div>
+
+      <a href="#/profile" class="nav-link" data-route="profile" aria-label="Profile">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+        </svg>
+        PROFILE
+      </a>
+
+      <a href="#/resume" class="nav-link" data-route="resume" aria-label="Resume">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+        </svg>
+        RESUME
+      </a>
+
+      <a href="#/credentials" class="nav-link" data-route="credentials" aria-label="Credentials">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
+        </svg>
+        CREDENTIALS
       </a>
 
       <div class="oc-nav-sep"></div>
@@ -134,6 +165,41 @@
             <tbody id="dash-runs"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- JOBS -->
+    <div id="view-jobs" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">JOB LISTINGS</span>
+          <span id="jobs-count" style="font-family:var(--mono);font-size:.65rem;color:var(--t-lo)"></span>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-left:auto">
+            <select id="jobs-status-filter" class="oc-input" style="width:136px;padding:.3rem .6rem" aria-label="Filter by status">
+              <option value="">ALL STATUS</option>
+              <option value="new">NEW</option>
+              <option value="matched">MATCHED</option>
+              <option value="applied">APPLIED</option>
+              <option value="rejected">REJECTED</option>
+            </select>
+            <select id="jobs-source-filter" class="oc-input" style="width:128px;padding:.3rem .6rem" aria-label="Filter by source">
+              <option value="">ALL SOURCES</option>
+              <option value="linkedin">LINKEDIN</option>
+              <option value="naukri">NAUKRI</option>
+              <option value="indeed">INDEED</option>
+              <option value="glassdoor">GLASSDOOR</option>
+            </select>
+          </div>
+        </div>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr><th>TITLE</th><th>COMPANY</th><th>LOCATION</th><th>SOURCE</th><th style="text-align:center">MATCH</th><th>STATUS</th><th>ACTIONS</th></tr>
+            </thead>
+            <tbody id="jobs-list"></tbody>
+          </table>
+        </div>
+        <div id="jobs-pagination" class="oc-pagination"></div>
       </div>
     </div>
 
@@ -233,6 +299,162 @@
           <span class="oc-card-title">PENDING SELECTOR PROPOSALS</span>
         </div>
         <div id="selectors-list"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="view-profile" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">IDENTITY</span>
+        </div>
+        <div class="oc-form-grid">
+          <div class="oc-field">
+            <label class="oc-label" for="prof-name">NAME</label>
+            <input id="prof-name" class="oc-input" type="text" autocomplete="off">
+          </div>
+          <div class="oc-field">
+            <label class="oc-label" for="prof-email">EMAIL</label>
+            <input id="prof-email" class="oc-input" type="email" autocomplete="off">
+          </div>
+          <div class="oc-field">
+            <label class="oc-label" for="prof-phone">PHONE</label>
+            <input id="prof-phone" class="oc-input" type="text" autocomplete="off">
+          </div>
+          <div class="oc-field">
+            <label class="oc-label" for="prof-location">LOCATION</label>
+            <input id="prof-location" class="oc-input" type="text" autocomplete="off">
+          </div>
+          <div class="oc-field oc-field-span2">
+            <label class="oc-label" for="prof-headline">HEADLINE</label>
+            <input id="prof-headline" class="oc-input" type="text" autocomplete="off">
+          </div>
+          <div class="oc-field oc-field-span2">
+            <label class="oc-label" for="prof-summary">SUMMARY</label>
+            <textarea id="prof-summary" class="oc-input oc-textarea" rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">PREFERRED TITLES</span>
+        </div>
+        <div id="prof-titles-tags" class="oc-tag-group"></div>
+        <div class="oc-tag-input-row">
+          <input id="prof-titles-input" class="oc-input" type="text" placeholder="Add title and press Enter…" style="flex:1">
+        </div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">SKILLS</span>
+        </div>
+        <div id="prof-skills-tags" class="oc-tag-group"></div>
+        <div class="oc-tag-input-row">
+          <input id="prof-skills-input" class="oc-input" type="text" placeholder="Add skill and press Enter…" style="flex:1">
+        </div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">EXPERIENCE</span>
+          <button class="oc-btn oc-btn-ghost oc-btn-sm" onclick="addExperience()">+ ADD ROLE</button>
+        </div>
+        <div id="prof-experience-list"></div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:1rem">
+        <button id="prof-save-btn" class="oc-btn oc-btn-primary">SAVE PROFILE</button>
+        <span id="prof-msg" style="font-family:var(--mono);font-size:.7rem"></span>
+      </div>
+    </div>
+
+    <!-- RESUME -->
+    <div id="view-resume" class="oc-view">
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">UPLOAD RESUME</span>
+        </div>
+        <div id="resume-dropzone" class="oc-dropzone" role="button" tabindex="0" aria-label="Drop resume file or click to browse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+          <div class="oc-dropzone-label">DROP PDF or DOCX HERE</div>
+          <div class="oc-dropzone-hint">or click to browse</div>
+          <input id="resume-file-input" type="file" accept=".pdf,.docx,.doc" style="display:none" aria-hidden="true">
+        </div>
+        <div id="resume-upload-status" style="margin-top:.75rem;font-family:var(--mono);font-size:.72rem"></div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">UPLOADED ORIGINALS</span>
+        </div>
+        <div id="resume-uploads-list"></div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">TAILORED RESUMES</span>
+        </div>
+        <div id="resume-resumes-list"></div>
+      </div>
+
+      <div class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">COVER LETTERS</span>
+        </div>
+        <div id="resume-covers-list"></div>
+      </div>
+    </div>
+
+    <!-- CREDENTIALS -->
+    <div id="view-credentials" class="oc-view">
+      <div id="cred-linkedin-card" class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">LINKEDIN</span>
+          <span id="cred-linkedin-pill"></span>
+        </div>
+        <div id="cred-linkedin-session" style="font-family:var(--mono);font-size:.72rem;color:var(--t-mid);margin-bottom:1rem"></div>
+        <div class="oc-form-grid">
+          <div class="oc-field">
+            <label class="oc-label" for="cred-linkedin-email">EMAIL</label>
+            <input id="cred-linkedin-email" class="oc-input" type="email" autocomplete="off" placeholder="LinkedIn email">
+          </div>
+          <div class="oc-field">
+            <label class="oc-label" for="cred-linkedin-pass">PASSWORD</label>
+            <input id="cred-linkedin-pass" class="oc-input" type="password" autocomplete="new-password" placeholder="••••••••">
+          </div>
+        </div>
+        <div style="display:flex;gap:.625rem;margin-top:.875rem">
+          <button class="oc-btn oc-btn-primary oc-btn-sm" onclick="saveCredentials('linkedin')">SAVE CREDENTIALS</button>
+          <button class="oc-btn oc-btn-ghost oc-btn-sm" id="cred-linkedin-relogin" onclick="triggerRelogin('linkedin')">RE-LOGIN</button>
+          <span id="cred-linkedin-msg" style="font-family:var(--mono);font-size:.7rem;align-self:center"></span>
+        </div>
+      </div>
+
+      <div id="cred-naukri-card" class="oc-card">
+        <div class="oc-card-header">
+          <span class="oc-card-title">NAUKRI</span>
+          <span id="cred-naukri-pill"></span>
+        </div>
+        <div id="cred-naukri-session" style="font-family:var(--mono);font-size:.72rem;color:var(--t-mid);margin-bottom:1rem"></div>
+        <div class="oc-form-grid">
+          <div class="oc-field">
+            <label class="oc-label" for="cred-naukri-email">EMAIL</label>
+            <input id="cred-naukri-email" class="oc-input" type="email" autocomplete="off" placeholder="Naukri email">
+          </div>
+          <div class="oc-field">
+            <label class="oc-label" for="cred-naukri-pass">PASSWORD</label>
+            <input id="cred-naukri-pass" class="oc-input" type="password" autocomplete="new-password" placeholder="••••••••">
+          </div>
+        </div>
+        <div style="display:flex;gap:.625rem;margin-top:.875rem">
+          <button class="oc-btn oc-btn-primary oc-btn-sm" onclick="saveCredentials('naukri')">SAVE CREDENTIALS</button>
+          <button class="oc-btn oc-btn-ghost oc-btn-sm" id="cred-naukri-relogin" onclick="triggerRelogin('naukri')">RE-LOGIN</button>
+          <span id="cred-naukri-msg" style="font-family:var(--mono);font-size:.7rem;align-self:center"></span>
+        </div>
       </div>
     </div>
 

@@ -1,14 +1,18 @@
 /* app.js — hash router, view loaders, pipeline trigger */
 
-const ROUTES = ['dashboard','integrations','runs','dlq','config','audit','selectors'];
+const ROUTES = ['dashboard','integrations','jobs','runs','dlq','config','audit','selectors','profile','resume','credentials'];
 const VIEW_LABELS = {
   dashboard:    'DASHBOARD',
   integrations: 'INTEGRATIONS',
+  jobs:         'JOBS',
   runs:         'RUNS',
   dlq:          'DEAD-LETTER QUEUE',
   config:       'CONFIG.YAML',
   audit:        'AUDIT LOG',
   selectors:    'SELECTOR PROPOSALS',
+  profile:      'PROFILE',
+  resume:       'RESUME & ARTIFACTS',
+  credentials:  'CREDENTIALS',
 };
 
 // ── XSS prevention ────────────────────────────────────────────────────────────
@@ -89,11 +93,15 @@ async function _loadRoute(route) {
     var loaders = {
       dashboard:    loadDashboard,
       integrations: loadIntegrations,
+      jobs:         function() { return loadJobs(1); },
       runs:         function() { return loadRuns(1); },
       dlq:          function() { return loadDlq(1); },
       config:       loadConfig,
       audit:        function() { return loadAudit(1); },
       selectors:    loadSelectors,
+      profile:      loadProfile,
+      resume:       loadResume,
+      credentials:  loadCredentials,
     };
     if (loaders[route]) await loaders[route]();
   } catch (e) {
@@ -463,6 +471,390 @@ window.rejectSelector = async function(id) {
   else _toast('Reject failed (HTTP ' + r.status + ')', 'error');
 };
 
+// ── Jobs ──────────────────────────────────────────────────────────────────────
+
+window.loadJobs = async function(page) {
+  page = page || 1;
+  var tbody = document.getElementById('jobs-list');
+  if (tbody) tbody.innerHTML = _skeletonRows(8, 7);
+
+  var status = document.getElementById('jobs-status-filter')?.value || '';
+  var source = document.getElementById('jobs-source-filter')?.value || '';
+  var qs = new URLSearchParams({page: page, per_page: 50});
+  if (status) qs.set('status', status);
+  if (source) qs.set('source', source);
+
+  var r    = await authFetch('/api/v1/jobs?' + qs);
+  var data = await r.json();
+
+  var countEl = document.getElementById('jobs-count');
+  if (countEl) countEl.textContent = data.total + ' TOTAL';
+
+  tbody.innerHTML = data.items.length
+    ? data.items.map(function(j) {
+        var score = j.match_score != null
+          ? '<span class="oc-score" style="--s:' + Math.round(j.match_score) + '">' + Math.round(j.match_score) + '</span>'
+          : '<span style="color:var(--t-lo)">—</span>';
+        var star = j.starred
+          ? '<button class="oc-btn oc-btn-sm oc-btn-star active" title="Unstar" onclick="toggleStar(\'' + _esc(j.id) + '\')">&#9733;</button>'
+          : '<button class="oc-btn oc-btn-sm oc-btn-star" title="Star"   onclick="toggleStar(\'' + _esc(j.id) + '\')">&#9734;</button>';
+        var dimmed = j.dismissed ? ' style="opacity:.4"' : '';
+        return '<tr' + dimmed + '>' +
+          '<td style="font-size:.75rem;max-width:220px"><a href="' + _esc(j.url || '#') + '" target="_blank" rel="noopener" class="oc-job-link">' + _esc(j.title) + '</a></td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid)">' + _esc(j.company) + '</td>' +
+          '<td style="font-size:.75rem;color:var(--t-mid)">' + _esc(j.location || '—') + '</td>' +
+          '<td><span class="oc-source-badge ' + _esc(j.source) + '">' + _esc(j.source.toUpperCase()) + '</span></td>' +
+          '<td style="text-align:center">' + score + '</td>' +
+          '<td>' + _statusPill(j.status) + '</td>' +
+          '<td style="white-space:nowrap">' +
+            star +
+            '<button class="oc-btn oc-btn-ghost oc-btn-sm" style="margin-left:.3rem" onclick="tailorJob(\'' + _esc(j.id) + '\')" title="Generate tailored resume + cover letter">TAILOR</button>' +
+            (j.dismissed
+              ? ''
+              : '<button class="oc-btn oc-btn-danger oc-btn-sm" style="margin-left:.3rem" onclick="dismissJob(\'' + _esc(j.id) + '\')">✕</button>') +
+          '</td>' +
+          '</tr>';
+      }).join('')
+    : '<tr><td colspan="7" class="oc-empty">No jobs found.</td></tr>';
+
+  document.getElementById('jobs-pagination').innerHTML =
+    _paginationButtons(page, data.has_next, 'loadJobs');
+};
+
+window.toggleStar = async function(id) {
+  var r = await authFetch('/api/v1/jobs/' + id + '/star', {method: 'POST'});
+  if (r.ok) loadJobs(1);
+  else _toast('Action failed', 'error');
+};
+
+window.dismissJob = async function(id) {
+  var r = await authFetch('/api/v1/jobs/' + id + '/dismiss', {method: 'POST'});
+  if (r.ok) { _toast('Job dismissed', 'ok'); loadJobs(1); }
+  else _toast('Dismiss failed', 'error');
+};
+
+window.tailorJob = async function(id) {
+  _toast('Tailoring queued…', 'info');
+  var r = await authFetch('/api/v1/jobs/' + id + '/tailor', {method: 'POST'});
+  if (r.ok) _toast('Tailor task queued', 'ok');
+  else {
+    var d = await r.json().catch(function() { return {}; });
+    _toast(d.detail || 'Tailor failed (HTTP ' + r.status + ')', 'error');
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  var sf = document.getElementById('jobs-status-filter');
+  var xf = document.getElementById('jobs-source-filter');
+  if (sf) sf.addEventListener('change', function() { loadJobs(1); });
+  if (xf) xf.addEventListener('change', function() { loadJobs(1); });
+});
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+var _profileData = {};
+var _profileTitles = [];
+var _profileSkills = [];
+
+function _renderTags(containerId, items, inputId, arrRef) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = items.map(function(tag, i) {
+    return '<span class="oc-tag">' + _esc(tag) +
+      '<button class="oc-tag-remove" aria-label="Remove ' + _esc(tag) + '" data-i="' + i + '">&#x2715;</button>' +
+      '</span>';
+  }).join('');
+  container.querySelectorAll('.oc-tag-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      arrRef.splice(parseInt(btn.dataset.i), 1);
+      _renderTags(containerId, arrRef, inputId, arrRef);
+    });
+  });
+}
+
+function _setupTagInput(inputId, containerId, arrRef) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      var val = input.value.trim().replace(/,$/, '');
+      if (val && !arrRef.includes(val)) {
+        arrRef.push(val);
+        _renderTags(containerId, arrRef, inputId, arrRef);
+      }
+      input.value = '';
+    }
+  });
+}
+
+function _renderExperience() {
+  var list = document.getElementById('prof-experience-list');
+  if (!list) return;
+  var exp = _profileData.experience || [];
+  if (!exp.length) {
+    list.innerHTML = '<div class="oc-empty">No experience entries.</div>';
+    return;
+  }
+  list.innerHTML = exp.map(function(e, i) {
+    return '<div class="oc-exp-item" data-i="' + i + '">' +
+      '<div class="oc-exp-header">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:.82rem;font-weight:600;color:var(--t-hi)">' + _esc(e.title) + '</div>' +
+          '<div style="font-size:.73rem;color:var(--t-mid);font-family:var(--mono)">' + _esc(e.company) + ' &bull; ' + _esc(e.dates) + '</div>' +
+        '</div>' +
+        '<button class="oc-btn oc-btn-danger oc-btn-sm" onclick="removeExperience(' + i + ')">REMOVE</button>' +
+      '</div>' +
+      '<ul style="margin:.5rem 0 0 1.25rem;display:flex;flex-direction:column;gap:.25rem">' +
+        (e.bullets || []).map(function(b) { return '<li style="font-size:.76rem;color:var(--t-mid)">' + _esc(b) + '</li>'; }).join('') +
+      '</ul>' +
+      '</div>';
+  }).join('');
+}
+
+window.addExperience = function() {
+  var title   = prompt('Job title:');   if (!title)   return;
+  var company = prompt('Company:');     if (!company) return;
+  var dates   = prompt('Date range (e.g. 01/2020 - 12/2022):') || '';
+  var bullStr = prompt('Bullet points (one per line):') || '';
+  var bullets = bullStr.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  (_profileData.experience = _profileData.experience || []).push({title: title, company: company, dates: dates, bullets: bullets});
+  _renderExperience();
+};
+
+window.removeExperience = function(i) {
+  if (_profileData.experience) {
+    _profileData.experience.splice(i, 1);
+    _renderExperience();
+  }
+};
+
+async function loadProfile() {
+  var r    = await authFetch('/api/v1/profile');
+  var body = await r.json();
+  _profileData   = body.data || {};
+  _profileTitles = (_profileData.preferred_titles || []).slice();
+  _profileSkills = (_profileData.skills || []).slice();
+
+  var set = function(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+  set('prof-name',     _profileData.name);
+  set('prof-email',    _profileData.email);
+  set('prof-phone',    _profileData.phone);
+  set('prof-location', _profileData.location);
+  set('prof-headline', _profileData.headline);
+  set('prof-summary',  _profileData.summary);
+
+  _renderTags('prof-titles-tags', _profileTitles, 'prof-titles-input', _profileTitles);
+  _setupTagInput('prof-titles-input', 'prof-titles-tags', _profileTitles);
+  _renderTags('prof-skills-tags', _profileSkills, 'prof-skills-input', _profileSkills);
+  _setupTagInput('prof-skills-input', 'prof-skills-tags', _profileSkills);
+  _renderExperience();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var saveBtn = document.getElementById('prof-save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async function() {
+      var msg = document.getElementById('prof-msg');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="oc-spin"></span> SAVING…';
+      try {
+        _profileData.name              = document.getElementById('prof-name')?.value || '';
+        _profileData.email             = document.getElementById('prof-email')?.value || '';
+        _profileData.phone             = document.getElementById('prof-phone')?.value || '';
+        _profileData.location          = document.getElementById('prof-location')?.value || '';
+        _profileData.headline          = document.getElementById('prof-headline')?.value || '';
+        _profileData.summary           = document.getElementById('prof-summary')?.value || '';
+        _profileData.preferred_titles  = _profileTitles.slice();
+        _profileData.skills            = _profileSkills.slice();
+
+        var r = await authFetch('/api/v1/profile', {
+          method:  'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body:    JSON.stringify({data: _profileData}),
+        });
+        if (r.ok) {
+          msg.style.color = 'var(--ok)';
+          msg.textContent = 'Saved.';
+          _toast('Profile saved', 'ok');
+          setTimeout(function() { msg.textContent = ''; }, 3000);
+        } else {
+          var err = await r.json().catch(function() { return {}; });
+          msg.style.color = 'var(--err)';
+          msg.textContent = err.detail || 'Save failed';
+          _toast('Profile save failed', 'error');
+        }
+      } catch (e) {
+        msg.style.color = 'var(--err)';
+        msg.textContent = String(e);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'SAVE PROFILE';
+      }
+    });
+  }
+});
+
+// ── Resume & Artifacts ────────────────────────────────────────────────────────
+
+function _bytesLabel(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+
+function _artifactRow(subdir, file) {
+  return '<div class="oc-artifact-row">' +
+    '<span class="oc-artifact-name" title="' + _esc(file.name) + '">' + _esc(file.name) + '</span>' +
+    '<span class="oc-artifact-meta">' + _esc(_bytesLabel(file.size)) + ' &bull; ' + _esc(_ts(file.modified)) + '</span>' +
+    '<a href="/api/v1/artifacts/download/' + _esc(subdir) + '/' + _esc(encodeURIComponent(file.name)) + '" class="oc-btn oc-btn-ghost oc-btn-sm" download>' +
+      'DOWNLOAD' +
+    '</a>' +
+    '</div>';
+}
+
+function _artifactList(containerId, subdir, files) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = files.length
+    ? files.map(function(f) { return _artifactRow(subdir, f); }).join('')
+    : '<div class="oc-empty">No files yet.</div>';
+}
+
+async function loadResume() {
+  var r    = await authFetch('/api/v1/artifacts');
+  var data = await r.json();
+  _artifactList('resume-uploads-list',  'uploads', data.uploads);
+  _artifactList('resume-resumes-list',  'resumes', data.resumes);
+  _artifactList('resume-covers-list',   'covers',  data.covers);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var dz    = document.getElementById('resume-dropzone');
+  var input = document.getElementById('resume-file-input');
+  var status = document.getElementById('resume-upload-status');
+  if (!dz || !input) return;
+
+  function _startUpload(file) {
+    if (!file) return;
+    status.style.color = 'var(--t-mid)';
+    status.textContent = 'Uploading ' + file.name + '…';
+    dz.classList.add('oc-dropzone-busy');
+
+    var fd = new FormData();
+    fd.append('file', file);
+    authFetch('/api/v1/artifacts/upload', {method: 'POST', body: fd})
+      .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, d: d}; }); })
+      .then(function(res) {
+        dz.classList.remove('oc-dropzone-busy');
+        if (res.ok) {
+          status.style.color = 'var(--ok)';
+          status.textContent = res.d.name + ' uploaded (' + _bytesLabel(res.d.size) + ')';
+          _toast('Resume uploaded', 'ok');
+          if (document.getElementById('resume-uploads-list')) loadResume();
+        } else {
+          status.style.color = 'var(--err)';
+          status.textContent = res.d.detail || 'Upload failed';
+          _toast('Upload failed', 'error');
+        }
+      })
+      .catch(function(e) {
+        dz.classList.remove('oc-dropzone-busy');
+        status.style.color = 'var(--err)';
+        status.textContent = String(e);
+        _toast('Upload error', 'error');
+      });
+  }
+
+  dz.addEventListener('click', function() { input.click(); });
+  dz.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', function() { if (input.files[0]) _startUpload(input.files[0]); input.value = ''; });
+
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('oc-dropzone-over'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('oc-dropzone-over'); });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.classList.remove('oc-dropzone-over');
+    var file = e.dataTransfer?.files[0];
+    if (file) _startUpload(file);
+  });
+});
+
+// ── Credentials ───────────────────────────────────────────────────────────────
+
+async function loadCredentials() {
+  var r    = await authFetch('/api/v1/credentials');
+  var data = await r.json();
+
+  ['linkedin', 'naukri'].forEach(function(platform) {
+    var info    = data.platforms[platform] || {};
+    var pillEl  = document.getElementById('cred-' + platform + '-pill');
+    var sessEl  = document.getElementById('cred-' + platform + '-session');
+    var emailEl = document.getElementById('cred-' + platform + '-email');
+
+    if (pillEl) pillEl.outerHTML = _statusPill(info.status === 'connected' ? 'connected' : info.status === 'expired' ? 'failed' : 'pending');
+    if (sessEl) {
+      sessEl.textContent = info.session_at
+        ? 'Last session: ' + _ts(info.session_at)
+        : 'No active session stored.';
+    }
+    if (emailEl && info.email) emailEl.value = info.email;
+  });
+}
+
+window.saveCredentials = async function(platform) {
+  var email = document.getElementById('cred-' + platform + '-email')?.value?.trim();
+  var pass  = document.getElementById('cred-' + platform + '-pass')?.value;
+  var msg   = document.getElementById('cred-' + platform + '-msg');
+  if (!email || !pass) {
+    if (msg) { msg.style.color = 'var(--err)'; msg.textContent = 'Email and password required.'; }
+    return;
+  }
+  try {
+    var r = await authFetch('/api/v1/credentials', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({platform: platform, email: email, password: pass}),
+    });
+    if (r.ok) {
+      if (msg) { msg.style.color = 'var(--ok)'; msg.textContent = 'Saved.'; }
+      document.getElementById('cred-' + platform + '-pass').value = '';
+      _toast(platform + ' credentials saved', 'ok');
+      setTimeout(function() { if (msg) msg.textContent = ''; }, 3000);
+    } else {
+      var err = await r.json().catch(function() { return {}; });
+      if (msg) { msg.style.color = 'var(--err)'; msg.textContent = err.detail || 'Save failed'; }
+    }
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--err)'; msg.textContent = String(e); }
+  }
+};
+
+window.triggerRelogin = async function(platform) {
+  var btn = document.getElementById('cred-' + platform + '-relogin');
+  var msg = document.getElementById('cred-' + platform + '-msg');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="oc-spin"></span> LOGGING IN…'; }
+  try {
+    var r = await authFetch('/api/v1/credentials/' + platform + '/relogin', {method: 'POST'});
+    var d = await r.json().catch(function() { return {}; });
+    if (r.ok) {
+      if (msg) { msg.style.color = 'var(--ok)'; msg.textContent = 'Task queued (' + (d.task_id || '').slice(0,8) + '…)'; }
+      _toast(platform + ' re-login queued', 'ok');
+      setTimeout(function() { loadCredentials(); }, 5000);
+    } else {
+      if (msg) { msg.style.color = 'var(--err)'; msg.textContent = d.detail || 'Failed'; }
+      _toast(d.detail || platform + ' re-login failed', 'error');
+    }
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--err)'; msg.textContent = String(e); }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = 'RE-LOGIN'; }
+  }
+};
+
 // ── Pipeline trigger ──────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -558,10 +950,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  if (getToken()) {
-    _showConsole();
-    _loadRoute(currentRoute());
-  } else {
-    _showLogin();
-  }
+  initAuth().then(function(result) {
+    if (result === 'console') {
+      _showConsole();
+      _loadRoute(currentRoute());
+    } else {
+      _showLogin();
+    }
+  });
 });

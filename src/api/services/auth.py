@@ -11,7 +11,13 @@ from cryptography.hazmat.primitives.serialization import (
     Encoding,
     PublicFormat,
     load_der_public_key,
+    load_pem_public_key,
 )
+
+
+def load_pem_public_key_bytes(pem: str) -> bytes:
+    """Convert stored PEM public key to DER bytes for load_der_public_key."""
+    return load_pem_public_key(pem.encode()).public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -96,3 +102,55 @@ async def pair_device(
     await db.commit()
 
     return create_jwt(device.id)
+
+
+async def store_reauth_challenge(redis: aioredis.Redis, db: AsyncSession, device_id: str) -> str:
+    """Issue a fresh challenge for an existing device. Returns challenge hex."""
+    try:
+        uid = uuid.UUID(device_id)
+    except ValueError:
+        raise ValueError("invalid_device_id")
+
+    repo = DevicesRepository(db)
+    device = await repo.get(uid)
+    if device is None or device.revoked_at is not None:
+        raise ValueError("device_not_found")
+
+    challenge = secrets.token_bytes(32)
+    await redis.setex(f"reauth:{device_id}", 60, challenge.hex())
+    return challenge.hex()
+
+
+async def reauth_device(
+    *,
+    redis: aioredis.Redis,
+    db: AsyncSession,
+    device_id: str,
+    signature_hex: str,
+) -> str:
+    """Verify device signature against stored reauth challenge, return fresh JWT."""
+    try:
+        uid = uuid.UUID(device_id)
+    except ValueError:
+        raise ValueError("invalid_device_id")
+
+    ch_val = await redis.get(f"reauth:{device_id}")
+    if not ch_val:
+        raise ValueError("challenge_expired")
+    challenge_bytes = bytes.fromhex(ch_val)
+
+    repo = DevicesRepository(db)
+    device = await repo.get(uid)
+    if device is None or device.revoked_at is not None:
+        raise ValueError("device_not_found")
+
+    try:
+        pub_key: Ed25519PublicKey = load_der_public_key(  # type: ignore[assignment]
+            load_pem_public_key_bytes(device.public_key)
+        )
+        pub_key.verify(bytes.fromhex(signature_hex), challenge_bytes)
+    except (InvalidSignature, Exception):
+        raise ValueError("invalid_signature")
+
+    await redis.delete(f"reauth:{device_id}")
+    return create_jwt(uid)

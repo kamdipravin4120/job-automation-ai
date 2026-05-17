@@ -22,8 +22,10 @@ class Settings(BaseSettings):
 
     # Required secrets
     openai_api_key: SecretStr
-    anthropic_api_key: SecretStr
     database_url: str
+
+    # Optional — only needed if using Claude for Gmail classification (default: Gemini)
+    anthropic_api_key: SecretStr | None = None
     celery_broker_url: str
     celery_result_backend: str
 

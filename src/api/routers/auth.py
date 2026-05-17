@@ -8,9 +8,11 @@ from src.api.schemas.auth import (
     ChallengeRequest,
     ChallengeResponse,
     PairRequest,
+    ReauthChallengeRequest,
+    ReauthRequest,
     TokenResponse,
 )
-from src.api.services.auth import pair_device, store_challenge
+from src.api.services.auth import pair_device, reauth_device, store_challenge, store_reauth_challenge
 from src.data.db import get_sessionmaker
 
 router = APIRouter()
@@ -54,6 +56,37 @@ async def pair(
             public_key_pem=body.public_key,
             signature_hex=body.signature,
             pairing_ip=request.client.host if request.client else None,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+    return TokenResponse(token=token)
+
+
+@router.post("/reauth/challenge", response_model=ChallengeResponse)
+async def reauth_challenge(
+    body: ReauthChallengeRequest,
+    redis=Depends(get_redis),
+    db: AsyncSession = Depends(_get_db),
+):
+    try:
+        challenge_hex = await store_reauth_challenge(redis, db, body.device_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+    return ChallengeResponse(challenge=challenge_hex)
+
+
+@router.post("/reauth", response_model=TokenResponse)
+async def reauth(
+    body: ReauthRequest,
+    redis=Depends(get_redis),
+    db: AsyncSession = Depends(_get_db),
+):
+    try:
+        token = await reauth_device(
+            redis=redis,
+            db=db,
+            device_id=body.device_id,
+            signature_hex=body.signature,
         )
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc))

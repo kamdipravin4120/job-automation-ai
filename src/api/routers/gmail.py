@@ -75,26 +75,27 @@ async def gmail_sync(_device=Depends(get_current_device), db=Depends(_get_db)):
     oauth = _get_oauth()
     if not oauth.is_authorized():
         raise HTTPException(status_code=403, detail="Gmail not authorized — complete OAuth flow first")
-    from anthropic import Anthropic
+    import os
+    import google.generativeai as genai
     from src.gmail.classifier import EmailStatus, classify_email
     from src.gmail.client import GmailClient
     from src.gmail.linker import find_application_by_company
     from src.gmail.recruiter import extract_recruiter
-    settings = get_settings()
     creds = oauth.get_credentials()
     client = GmailClient(credentials=creds)
     messages = client.list_unread(max_results=50)
-    anthropic = Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    gemini = genai.GenerativeModel("gemini-2.0-flash-lite")
     classified: dict[str, int] = {s.value: 0 for s in EmailStatus}
     now = datetime.now(UTC)
     for msg in messages:
-        status = classify_email(msg.subject, msg.body, anthropic)
+        status = classify_email(msg.subject, msg.body, gemini)
         classified[status.value] += 1
         contact = extract_recruiter(
             sender=msg.sender,
             subject=msg.subject,
             body=msg.body,
-            anthropic_client=anthropic,
+            gemini_model=gemini,
         )
         if contact.company:
             app = await find_application_by_company(db, contact.company)

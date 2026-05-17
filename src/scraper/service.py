@@ -15,7 +15,7 @@ class ScraperService:
     def __init__(self, config: AppConfig, config_dir: Path, logger: logging.Logger) -> None:
         self.config = config
         self.config_dir = config_dir
-        self.logger = logger.getChild("scraper")
+        self.logger = getattr(logger, 'getChild', lambda _: logger)("scraper")
         
         # Scraper Registry
         self._scraper_map = {

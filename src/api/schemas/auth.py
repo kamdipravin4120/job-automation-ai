@@ -31,3 +31,12 @@ class PairRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     token: str
+
+
+class ReauthChallengeRequest(BaseModel):
+    device_id: str
+
+
+class ReauthRequest(BaseModel):
+    device_id: str
+    signature: str

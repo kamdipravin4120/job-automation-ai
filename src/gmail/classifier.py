@@ -25,12 +25,8 @@ Body:
 {body}"""
 
 
-def classify_email(subject: str, body: str, anthropic_client) -> EmailStatus:
+def classify_email(subject: str, body: str, gemini_model) -> EmailStatus:
     prompt = _PROMPT.format(subject=subject[:200], body=body[:1500])
-    response = anthropic_client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=10,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = response.content[0].text.strip().lower()
+    response = gemini_model.generate_content(prompt)
+    raw = response.text.strip().lower()
     return EmailStatus(raw) if raw in _VALID_STATUSES else EmailStatus.OTHER
