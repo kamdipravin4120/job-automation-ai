@@ -132,3 +132,69 @@ Resume text:
         payload = extract_json_object(response.text)
         self.logger.info("Gemini successfully extracted candidate profile from resume.")
         return CandidateProfile.model_validate(payload)
+
+    @retry_sync(attempts=3)
+    def analyze_linkedin_profile(self, linkedin_text: str) -> dict:
+        """New: Executive Brand Strategy Analysis."""
+        prompt = f"""
+You are an Executive Branding Strategist specializing in CTO and VP-level roles.
+Analyze this LinkedIn profile PDF export and provide an 'Elite' brand calibration.
+
+Rules:
+- Headline: Must be high-impact, keyword-rich (industry, specific role, ROI/Impact).
+- Summary: Professional, concise, focusing on leadership and strategic outcomes.
+- Recommendations: Specific, actionable tips for market positioning (e.g., 'Highlight your international M&A experience more').
+- Return ONLY valid JSON.
+
+LinkedIn Text:
+{linkedin_text}
+
+Return JSON with exactly these keys:
+- headline
+- summary
+- recommendations (list of strings)
+"""
+        response = self.model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=2048,
+            ),
+        )
+        return extract_json_object(response.text)
+
+    @retry_sync(attempts=3)
+    def generate_interview_briefing(self, profile: CandidateProfile, job: JobPosting) -> list[dict]:
+        """New: Generate Tactical Drill Questions & STAR Points."""
+        self.logger.info("Generating tactical briefing for job: %s", job.job_id)
+        prompt = f"""
+You are an Elite Interview Coach for CTO and VP-level Engineering candidates.
+Generate a 'Combat Briefing' for a candidate preparing for an interview with the following details.
+
+# Candidate Career DNA (JSON):
+{profile.model_dump_json(indent=2)}
+
+# Target Job Intelligence (JSON):
+{job.model_dump_json(indent=2)}
+
+Your task:
+Analyze the JD requirements and the candidate's history to produce 5-7 high-probability interview questions (3 Behavioral/Leadership, 2 Technical/Strategic, 2 ROI-focused).
+
+For each question, provide:
+1. 'question': The likely interview question.
+2. 'rationale': Why an elite employer is asking this (the hidden objective).
+3. 'star_points': 3-4 specific STAR points from the candidate's profile that they should use in their answer.
+
+Return ONLY a valid JSON list of objects with these keys:
+- question
+- rationale
+- star_points (list of strings)
+"""
+        response = self.model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=3072,
+            ),
+        )
+        return extract_json_object(response.text)

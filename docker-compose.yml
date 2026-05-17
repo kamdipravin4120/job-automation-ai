@@ -33,3 +33,66 @@ services:
         "config.yaml"
       ]
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jobautomation
+      POSTGRES_USER: jobauto
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobauto -d jobautomation"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  worker-scrape:
+    build: .
+    command: python main.py worker --queues scrape --concurrency 1
+    env_file: .env
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  worker-ai:
+    build: .
+    command: python main.py worker --queues ai --concurrency 4
+    env_file: .env
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  worker-browser:
+    build: .
+    command: python main.py worker --queues browser --concurrency 1
+    env_file: .env
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  worker-mail:
+    build: .
+    command: python main.py worker --queues mail --concurrency 2
+    env_file: .env
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+volumes:
+  pg_data:
+  redis_data:
+

@@ -36,6 +36,8 @@ class ScraperSourceConfig(BaseModel):
 class ScraperConfig(BaseModel):
     linkedin: ScraperSourceConfig
     naukri: ScraperSourceConfig
+    indeed: ScraperSourceConfig
+    glassdoor: ScraperSourceConfig
 
 
 class MatcherWeights(BaseModel):
